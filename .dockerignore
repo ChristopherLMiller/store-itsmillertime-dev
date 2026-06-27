@@ -1,0 +1,14 @@
+.git
+.turbo
+**/.turbo
+**/node_modules
+**/.next
+**/dist
+**/build
+**/.medusa
+**/.env
+**/.env.*
+!**/.env.template
+apps/storefront
+coverage
+.DS_Store
