@@ -1,14 +1,25 @@
-.git
-.turbo
-**/.turbo
+# Dependencies and build artifacts
+node_modules
 **/node_modules
+**/.turbo
 **/.next
 **/dist
 **/build
-**/.medusa
+**/.cache
+
+# Medusa local output (rebuilt in the image)
+apps/backend/.medusa
+
+# Never bake secrets into the image
 **/.env
 **/.env.*
 !**/.env.template
-apps/storefront
-coverage
+
+# Git and editor noise
+.git
+.gitignore
+.vscode
 .DS_Store
+
+# Storefront is deployed separately
+apps/storefront
