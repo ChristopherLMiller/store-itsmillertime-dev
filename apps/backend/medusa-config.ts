@@ -43,6 +43,10 @@ const modules = useR2
   : []
 
 module.exports = defineConfig({
+  admin: {
+    // Default is 1MB in the admin UI; R2 has no practical limit on our side.
+    maxUploadFileSize: Infinity,
+  },
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
     redisUrl: process.env.REDIS_URL,
