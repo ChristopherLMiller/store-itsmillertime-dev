@@ -10,37 +10,56 @@ loadEnv(process.env.NODE_ENV || 'development', process.cwd())
  */
 const useR2 = Boolean(process.env.R2_BUCKET && process.env.R2_ENDPOINT)
 
-const modules = useR2
-  ? [
-      {
-        resolve: '@medusajs/medusa/file',
-        options: {
-          providers: [
-            {
-              resolve: '@medusajs/medusa/file-s3',
-              id: 's3',
-              options: {
-                // Public base URL for files, e.g. https://pub-xxxx.r2.dev or a
-                // custom domain mapped to the bucket.
-                file_url: process.env.R2_FILE_URL,
-                endpoint: process.env.R2_ENDPOINT,
-                bucket: process.env.R2_BUCKET,
-                region: process.env.R2_REGION || 'auto',
-                access_key_id: process.env.R2_ACCESS_KEY_ID,
-                secret_access_key: process.env.R2_SECRET_ACCESS_KEY,
-                prefix: process.env.R2_PREFIX || '',
-                // R2 requires explicit access-key auth (no IAM roles).
-                authentication_method: 'access-key',
-                additional_client_config: {
-                  forcePathStyle: true,
-                },
-              },
-            },
-          ],
+const modules: Record<string, unknown>[] = [
+  { resolve: './src/modules/print-catalog' },
+  { resolve: './src/modules/prodigi' },
+  {
+    resolve: '@medusajs/medusa/fulfillment',
+    options: {
+      providers: [
+        // Keep the default manual provider alongside Prodigi.
+        {
+          resolve: '@medusajs/medusa/fulfillment-manual',
+          id: 'manual',
         },
-      },
-    ]
-  : []
+        {
+          resolve: './src/modules/prodigi-fulfillment',
+          id: 'prodigi',
+        },
+      ],
+    },
+  },
+]
+
+if (useR2) {
+  modules.push({
+    resolve: '@medusajs/medusa/file',
+    options: {
+      providers: [
+        {
+          resolve: '@medusajs/medusa/file-s3',
+          id: 's3',
+          options: {
+            // Public base URL for files, e.g. https://pub-xxxx.r2.dev or a
+            // custom domain mapped to the bucket.
+            file_url: process.env.R2_FILE_URL,
+            endpoint: process.env.R2_ENDPOINT,
+            bucket: process.env.R2_BUCKET,
+            region: process.env.R2_REGION || 'auto',
+            access_key_id: process.env.R2_ACCESS_KEY_ID,
+            secret_access_key: process.env.R2_SECRET_ACCESS_KEY,
+            prefix: process.env.R2_PREFIX || '',
+            // R2 requires explicit access-key auth (no IAM roles).
+            authentication_method: 'access-key',
+            additional_client_config: {
+              forcePathStyle: true,
+            },
+          },
+        },
+      ],
+    },
+  })
+}
 
 module.exports = defineConfig({
   admin: {
@@ -58,5 +77,5 @@ module.exports = defineConfig({
       cookieSecret: process.env.COOKIE_SECRET,
     }
   },
-  ...(modules.length ? { modules } : {}),
+  modules,
 })
