@@ -1,8 +1,11 @@
-# Coolify: Medusa backend only (Postgres + Redis are external services).
+# Coolify / Docker: Medusa backend (Postgres + Redis are external services).
+#
+# Build from repo root:
+#   docker build -f apps/backend/Dockerfile -t dtc-backend .
 #
 # Coolify settings:
 #   Base directory: / (repo root)
-#   Dockerfile location: Dockerfile
+#   Dockerfile location: apps/backend/Dockerfile
 #   Port: 9000
 
 ARG NODE_VERSION=22

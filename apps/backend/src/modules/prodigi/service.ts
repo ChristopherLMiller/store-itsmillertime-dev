@@ -340,8 +340,47 @@ class ProdigiModuleService {
     return this.request("POST", "/quotes", input)
   }
 
+  private optionalProdigiField(value?: string | null): string | undefined {
+    if (value == null) {
+      return undefined
+    }
+
+    const trimmed = value.trim()
+    return trimmed || undefined
+  }
+
+  private normalizeCreateOrderInput(
+    input: ProdigiCreateOrderInput
+  ): ProdigiCreateOrderInput {
+    const line2 = this.optionalProdigiField(input.recipient.address.line2)
+    const stateOrCounty = this.optionalProdigiField(
+      input.recipient.address.stateOrCounty
+    )
+    const email = this.optionalProdigiField(input.recipient.email)
+
+    return {
+      ...input,
+      recipient: {
+        name: input.recipient.name.trim(),
+        ...(email ? { email } : {}),
+        address: {
+          line1: input.recipient.address.line1.trim(),
+          ...(line2 ? { line2 } : {}),
+          postalOrZipCode: input.recipient.address.postalOrZipCode.trim(),
+          countryCode: input.recipient.address.countryCode.trim(),
+          townOrCity: input.recipient.address.townOrCity.trim(),
+          ...(stateOrCounty ? { stateOrCounty } : {}),
+        },
+      },
+    }
+  }
+
   async createOrder(input: ProdigiCreateOrderInput) {
-    return this.request("POST", "/orders", input)
+    return this.request(
+      "POST",
+      "/orders",
+      this.normalizeCreateOrderInput(input)
+    )
   }
 
   async getOrder(orderId: string) {

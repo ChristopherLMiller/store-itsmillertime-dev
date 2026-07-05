@@ -104,6 +104,7 @@ module.exports = defineConfig({
   admin: {
     // Default is 1MB in the admin UI; R2 has no practical limit on our side.
     maxUploadFileSize: Infinity,
+    path: "/app",
     storefrontUrl: process.env.STOREFRONT_URL || 'http://localhost:8000',
   },
   projectConfig: {

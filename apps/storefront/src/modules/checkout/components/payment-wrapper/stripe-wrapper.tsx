@@ -26,7 +26,7 @@ const StripeWrapper: React.FC<StripeWrapperProps> = ({
 
   if (!stripeKey) {
     throw new Error(
-      "Stripe key is missing. Set NEXT_PUBLIC_STRIPE_SANDBOX_KEY or NEXT_PUBLIC_STRIPE_LIVE_KEY to match NEXT_PUBLIC_ECOMMERCE_ENVIRONMENT."
+      "Stripe key is missing. Set NEXT_PUBLIC_STRIPE_SANDBOX_KEY or NEXT_PUBLIC_STRIPE_LIVE_KEY (matching NEXT_PUBLIC_ECOMMERCE_ENVIRONMENT) and rebuild the app."
     )
   }
 

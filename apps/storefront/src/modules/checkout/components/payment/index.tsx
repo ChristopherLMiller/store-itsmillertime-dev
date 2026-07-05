@@ -48,9 +48,14 @@ const Payment = ({
     setError(null)
     setSelectedPaymentMethod(method)
     if (isStripeLike(method)) {
-      await initiatePaymentSession(cart, {
-        provider_id: method,
-      })
+      try {
+        await initiatePaymentSession(cart, {
+          provider_id: method,
+        })
+        router.refresh()
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err))
+      }
     }
   }
 
@@ -90,16 +95,16 @@ const Payment = ({
         await initiatePaymentSession(cart, {
           provider_id: selectedPaymentMethod,
         })
+        router.refresh()
       }
 
-      if (!shouldInputCard) {
-        return router.push(
-          pathname + "?" + createQueryString("step", "review"),
-          {
-            scroll: false,
-          }
-        )
+      if (shouldInputCard) {
+        return
       }
+
+      return router.push(pathname + "?" + createQueryString("step", "review"), {
+        scroll: false,
+      })
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err))
     } finally {

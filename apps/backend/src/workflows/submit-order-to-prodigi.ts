@@ -193,11 +193,11 @@ const prepareProdigiSubmissionStep = createStep(
         email: order.email ?? undefined,
         address: {
           line1: address.address_1,
-          line2: address.address_2 ?? undefined,
+          line2: address.address_2?.trim() || undefined,
           postalOrZipCode: address.postal_code ?? "",
           countryCode: (address.country_code as string).toUpperCase(),
           townOrCity: address.city,
-          stateOrCounty: address.province ?? undefined,
+          stateOrCounty: address.province?.trim() || undefined,
         },
       },
       items,

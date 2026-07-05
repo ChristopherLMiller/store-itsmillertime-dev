@@ -5,6 +5,7 @@ import React, { useContext, useMemo, type JSX } from "react"
 import Radio from "@modules/common/components/radio"
 
 import { isManual } from "@lib/constants"
+import { resolveStripePublishableKey, getStripePublishableKeyEnvVar } from "@lib/util/ecommerce-environment"
 import SkeletonCardDetails from "@modules/skeletons/components/skeleton-card-details"
 import { CardElement } from "@stripe/react-stripe-js"
 import { StripeCardElementOptions } from "@stripe/stripe-js"
@@ -79,6 +80,7 @@ export const StripeCardContainer = ({
   setCardComplete: (complete: boolean) => void
 }) => {
   const stripeReady = useContext(StripeContext)
+  const stripePublishableKey = resolveStripePublishableKey()
 
   const useOptions: StripeCardElementOptions = useMemo(() => {
     return {
@@ -105,7 +107,12 @@ export const StripeCardContainer = ({
       disabled={disabled}
     >
       {selectedPaymentOptionId === paymentProviderId &&
-        (stripeReady ? (
+        (!stripePublishableKey ? (
+          <Text size="small" className="my-4 text-ui-fg-error">
+            Stripe publishable key is missing. Set {getStripePublishableKeyEnvVar()}{" "}
+            in your storefront environment and rebuild the app.
+          </Text>
+        ) : stripeReady ? (
           <div className="my-4 transition-all duration-150 ease-in-out">
             <Text className="txt-medium-plus text-ui-fg-base mb-1">
               Enter your card details:
