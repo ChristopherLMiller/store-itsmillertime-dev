@@ -1,4 +1,5 @@
 import "server-only"
+import { fetchRevalidate } from "@lib/util/cache"
 import { cookies as nextCookies } from "next/headers"
 
 export const getAuthHeaders = async (): Promise<
@@ -41,6 +42,10 @@ export const getCacheOptions = async (
   }
 
   const cacheTag = await getCacheTag(tag)
+
+  if (fetchRevalidate === 0) {
+    return { revalidate: 0 }
+  }
 
   if (!cacheTag) {
     return {}

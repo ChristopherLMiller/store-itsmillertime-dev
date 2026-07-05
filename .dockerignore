@@ -14,12 +14,10 @@ apps/backend/.medusa
 **/.env
 **/.env.*
 !**/.env.template
+!**/.env.local.template
 
 # Git and editor noise
 .git
 .gitignore
 .vscode
 .DS_Store
-
-# Storefront is deployed separately
-apps/storefront

@@ -1,6 +1,10 @@
-import { loadEnv, defineConfig } from '@medusajs/framework/utils'
+import { loadEnv, defineConfig } from '@medusajs/framework/utils';
+import {
+  resolveEnvironmentApiKey,
+  resolveStripeWebhookSecret,
+} from './src/utils/ecommerce-environment';
 
-loadEnv(process.env.NODE_ENV || 'development', process.cwd())
+loadEnv(process.env.NODE_ENV || 'development', process.cwd());
 
 /**
  * File storage: default to the local provider, but switch to S3-compatible
@@ -8,11 +12,12 @@ loadEnv(process.env.NODE_ENV || 'development', process.cwd())
  * dev working with zero config while letting production serve product images
  * from R2 so they render on the storefront.
  */
-const useR2 = Boolean(process.env.R2_BUCKET && process.env.R2_ENDPOINT)
+const useR2 = Boolean(process.env.R2_BUCKET && process.env.R2_ENDPOINT);
 
 const modules: Record<string, unknown>[] = [
   { resolve: './src/modules/print-catalog' },
   { resolve: './src/modules/prodigi' },
+  { resolve: './src/modules/digital-delivery' },
   {
     resolve: '@medusajs/medusa/fulfillment',
     options: {
@@ -29,7 +34,41 @@ const modules: Record<string, unknown>[] = [
       ],
     },
   },
-]
+  {
+    resolve: '@medusajs/medusa/notification',
+    options: {
+      providers: [
+        {
+          resolve: './src/modules/resend',
+          id: 'resend',
+          options: {
+            channels: ['email'],
+            api_key: process.env.RESEND_API_KEY,
+            from: process.env.RESEND_FROM_EMAIL,
+          },
+        },
+      ],
+    },
+  },
+  {
+    resolve: '@medusajs/medusa/payment',
+    options: {
+      providers: [
+        {
+          resolve: '@medusajs/medusa/payment-stripe',
+          id: 'stripe',
+          options: {
+            apiKey: resolveEnvironmentApiKey('STRIPE'),
+            webhookSecret: resolveStripeWebhookSecret(),
+            // Auto-capture so digital fulfillment and Prodigi submit work without
+            // a manual capture step in admin.
+            capture: true,
+          },
+        },
+      ],
+    },
+  },
+];
 
 if (useR2) {
   modules.push({
@@ -58,13 +97,14 @@ if (useR2) {
         },
       ],
     },
-  })
+  });
 }
 
 module.exports = defineConfig({
   admin: {
     // Default is 1MB in the admin UI; R2 has no practical limit on our side.
     maxUploadFileSize: Infinity,
+    storefrontUrl: process.env.STOREFRONT_URL || 'http://localhost:8000',
   },
   projectConfig: {
     databaseUrl: process.env.DATABASE_URL,
@@ -75,7 +115,7 @@ module.exports = defineConfig({
       authCors: process.env.AUTH_CORS!,
       jwtSecret: process.env.JWT_SECRET,
       cookieSecret: process.env.COOKIE_SECRET,
-    }
+    },
   },
   modules,
-})
+});

@@ -1,13 +1,16 @@
-import type { ProdigiEnvironment, ProdigiModuleOptions } from "./types"
+import type { ProdigiModuleOptions } from "./types"
+import {
+  resolveEcommerceEnvironment,
+  resolveEnvironmentApiKey,
+} from "../../utils/ecommerce-environment"
 
 export function resolveProdigiConfig(): ProdigiModuleOptions {
-  const environment = (process.env.PRODIGI_ENVIRONMENT ||
-    "sandbox") as ProdigiEnvironment
+  const environment = resolveEcommerceEnvironment()
 
   if (environment === "live") {
     return {
       environment: "live",
-      apiKey: process.env.PRODIGI_API_KEY || "",
+      apiKey: resolveEnvironmentApiKey("PRODIGI"),
       baseUrl:
         process.env.PRODIGI_API_URL ||
         process.env.PRODIGI_LIVE_API_URL ||
@@ -17,8 +20,7 @@ export function resolveProdigiConfig(): ProdigiModuleOptions {
 
   return {
     environment: "sandbox",
-    apiKey:
-      process.env.PRODIGI_SANDBOX_API_KEY || process.env.PRODIGI_API_KEY || "",
+    apiKey: resolveEnvironmentApiKey("PRODIGI"),
     baseUrl:
       process.env.PRODIGI_API_URL ||
       process.env.PRODIGI_SANDBOX_API_URL ||

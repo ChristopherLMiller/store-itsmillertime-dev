@@ -1,6 +1,7 @@
 "use server"
 
 import { sdk } from "@lib/config"
+import { fetchCache } from "@lib/util/cache"
 import { HttpTypes } from "@medusajs/types"
 import { getCacheOptions } from "./cookies"
 
@@ -14,7 +15,7 @@ export const retrieveCollection = async (id: string) => {
       `/store/collections/${id}`,
       {
         next,
-        cache: "force-cache",
+        cache: fetchCache,
       }
     )
     .then(({ collection }) => collection)
@@ -36,7 +37,7 @@ export const listCollections = async (
       {
         query: queryParams,
         next,
-        cache: "force-cache",
+        cache: fetchCache,
       }
     )
     .then(({ collections }) => ({ collections, count: collections.length }))
@@ -53,7 +54,7 @@ export const getCollectionByHandle = async (
     .fetch<HttpTypes.StoreCollectionListResponse>(`/store/collections`, {
       query: { handle, fields: "*products" },
       next,
-      cache: "force-cache",
+      cache: fetchCache,
     })
     .then(({ collections }) => collections[0] || null)
 }

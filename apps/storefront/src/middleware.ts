@@ -1,4 +1,5 @@
 import { HttpTypes } from "@medusajs/types"
+import { fetchCache, shouldBypassDataCache } from "@lib/util/cache"
 import { NextRequest, NextResponse } from "next/server"
 
 const BACKEND_URL = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL
@@ -20,20 +21,27 @@ async function getRegionMap(cacheId: string) {
   }
 
   if (
+    shouldBypassDataCache ||
     !regionMap.keys().next().value ||
     regionMapUpdated < Date.now() - 3600 * 1000
   ) {
     // Fetch regions from Medusa. We can't use the JS client here because middleware is running on Edge and the client needs a Node environment.
+    if (shouldBypassDataCache) {
+      regionMapCache.regionMap.clear()
+    }
+
     const response = await fetch(`${BACKEND_URL}/store/regions`, {
       method: "GET",
       headers: {
         "x-publishable-api-key": PUBLISHABLE_API_KEY!,
       },
-      next: {
-        revalidate: 3600,
-        tags: [`regions-${cacheId}`],
-      },
-      cache: "force-cache",
+      next: shouldBypassDataCache
+        ? { revalidate: 0 }
+        : {
+            revalidate: 3600,
+            tags: [`regions-${cacheId}`],
+          },
+      cache: fetchCache,
     })
 
     if (!response.ok) {

@@ -1,6 +1,7 @@
 "use server"
 
 import { sdk } from "@lib/config"
+import { fetchCache, shouldBypassDataCache } from "@lib/util/cache"
 import { HttpTypes } from "@medusajs/types"
 import { getCacheOptions } from "./cookies"
 
@@ -13,7 +14,7 @@ export const listRegions = async () => {
     .fetch<{ regions: HttpTypes.StoreRegion[] }>(`/store/regions`, {
       method: "GET",
       next,
-      cache: "force-cache",
+      cache: fetchCache,
     })
     .then(({ regions }) => regions)
 }
@@ -27,7 +28,7 @@ export const retrieveRegion = async (id: string) => {
     .fetch<{ region: HttpTypes.StoreRegion }>(`/store/regions/${id}`, {
       method: "GET",
       next,
-      cache: "force-cache",
+      cache: fetchCache,
     })
     .then(({ region }) => region)
 }
@@ -35,7 +36,7 @@ export const retrieveRegion = async (id: string) => {
 const regionMap = new Map<string, HttpTypes.StoreRegion>()
 
 export const getRegion = async (countryCode: string) => {
-  if (regionMap.has(countryCode)) {
+  if (!shouldBypassDataCache && regionMap.has(countryCode)) {
     return regionMap.get(countryCode)
   }
 

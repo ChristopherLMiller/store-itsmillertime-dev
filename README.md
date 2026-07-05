@@ -150,7 +150,23 @@ The storefront is configured via environment variables in `apps/storefront/.env.
 | `NEXT_PUBLIC_MEDUSA_BACKEND_URL` | URL of your Medusa backend | `http://localhost:9000` |
 | `NEXT_PUBLIC_DEFAULT_REGION` | Default region country code | `dk` |
 | `NEXT_PUBLIC_BASE_URL` | Base URL of the storefront | `https://localhost:8000` |
-| `NEXT_PUBLIC_STRIPE_KEY` | Stripe publishable key (optional) | — |
+| `NEXT_PUBLIC_ECOMMERCE_ENVIRONMENT` | Must match backend `ECOMMERCE_ENVIRONMENT` (`sandbox` or `live`) | `sandbox` |
+| `NEXT_PUBLIC_STRIPE_SANDBOX_KEY` | Stripe test publishable key (`pk_test_...`) | — |
+| `NEXT_PUBLIC_STRIPE_LIVE_KEY` | Stripe live publishable key (`pk_live_...`) | — |
+
+Backend env (`apps/backend/.env`):
+
+| Variable | Description |
+|----------|-------------|
+| `ECOMMERCE_ENVIRONMENT` | `sandbox` or `live` — selects Prodigi and Stripe keys |
+| `PRODIGI_SANDBOX_API_KEY` | Prodigi sandbox API key |
+| `PRODIGI_LIVE_API_KEY` | Prodigi live API key |
+| `STRIPE_SANDBOX_API_KEY` | Stripe test secret key (`sk_test_...`) |
+| `STRIPE_LIVE_API_KEY` | Stripe live secret key (`sk_live_...`) |
+| `STRIPE_SANDBOX_WEBHOOK_SECRET` | Stripe test webhook secret (optional locally) |
+| `STRIPE_LIVE_WEBHOOK_SECRET` | Stripe live webhook secret |
+
+After setting keys, restart the backend and enable **Stripe** under **Settings → Regions → [your region] → Payment Providers** in the Medusa admin.
 
 ## Resources
 
