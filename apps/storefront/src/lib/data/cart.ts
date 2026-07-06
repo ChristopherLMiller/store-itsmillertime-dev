@@ -25,7 +25,7 @@ import { getLocale } from "./locale-actions"
 export async function retrieveCart(cartId?: string, fields?: string) {
   const id = cartId || (await getCartId())
   fields ??=
-    "*items, *region, *items.product, *items.variant, +items.variant.metadata, *items.thumbnail, *items.metadata, +items.title, +items.product_title, +items.total, *promotions, +shipping_methods.name, *payment_collection, *payment_collection.payment_sessions"
+    "*items, *region, *items.product, *items.variant, +items.variant.metadata, *items.thumbnail, *items.metadata, +items.total, *promotions, +shipping_methods.name, *payment_collection, *payment_collection.payment_sessions"
 
   if (!id) {
     return null
@@ -456,6 +456,11 @@ export async function updateRegion(countryCode: string, currentPath: string) {
 
 export async function listCartOptions() {
   const cartId = await getCartId()
+
+  if (!cartId) {
+    return { shipping_options: [] }
+  }
+
   const headers = {
     ...(await getAuthHeaders()),
   }
@@ -463,12 +468,14 @@ export async function listCartOptions() {
     ...(await getCacheOptions("shippingOptions")),
   }
 
-  return await sdk.client.fetch<{
-    shipping_options: HttpTypes.StoreCartShippingOption[]
-  }>("/store/shipping-options", {
-    query: { cart_id: cartId },
-    next,
-    headers,
-    cache: fetchCache,
-  })
+  return await sdk.client
+    .fetch<{
+      shipping_options: HttpTypes.StoreCartShippingOption[]
+    }>("/store/shipping-options", {
+      query: { cart_id: cartId },
+      next,
+      headers,
+      cache: fetchCache,
+    })
+    .catch(() => ({ shipping_options: [] }))
 }

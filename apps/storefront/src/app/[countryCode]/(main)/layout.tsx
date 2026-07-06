@@ -2,6 +2,7 @@ import { Metadata } from "next"
 
 import { listCartOptions, retrieveCart } from "@lib/data/cart"
 import { retrieveCustomer } from "@lib/data/customer"
+import { filterShippingMethodsForCart } from "@lib/util/shipping"
 import { getBaseURL } from "@lib/util/env"
 import { StoreCartShippingOption } from "@medusajs/types"
 import CartMismatchBanner from "@modules/layout/components/cart-mismatch-banner"
@@ -21,7 +22,7 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
   if (cart) {
     const { shipping_options } = await listCartOptions()
 
-    shippingOptions = shipping_options
+    shippingOptions = filterShippingMethodsForCart(shipping_options, cart)
   }
 
   return (

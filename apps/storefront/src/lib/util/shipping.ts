@@ -77,9 +77,9 @@ function isManualOrDigitalShippingOption(
 export function filterShippingMethodsForCart(
   methods: HttpTypes.StoreCartShippingOption[] | null,
   cart: HttpTypes.StoreCart
-): HttpTypes.StoreCartShippingOption[] | null {
+): HttpTypes.StoreCartShippingOption[] {
   if (!methods?.length) {
-    return methods
+    return []
   }
 
   const requiresPhysical = cartRequiresPhysicalShipping(cart)
