@@ -1,6 +1,7 @@
 import {
   createWorkflow,
   transform,
+  when,
   WorkflowResponse,
 } from "@medusajs/framework/workflows-sdk"
 import { Modules } from "@medusajs/framework/utils"
@@ -23,6 +24,7 @@ import { buildVariantPrices } from "../utils/print-pricing"
 export type ApplyOfferingSetToProductInput = {
   product_id: string
   offering_set_id: string
+  sells_digital?: boolean
 }
 
 export const applyOfferingSetToProductWorkflow = createWorkflow(
@@ -72,9 +74,18 @@ export const applyOfferingSetToProductWorkflow = createWorkflow(
       ],
     }))
 
-    const createdVariants = createProductVariantsWorkflow.runAsStep({
-      input: variantsInput,
-    })
+    const hasVariantsToCreate = transform({ plan }, ({ plan }) =>
+      plan.variants_to_create.length > 0 || plan.create_digital_variant
+    )
+
+    const createdVariants = when(
+      hasVariantsToCreate,
+      (shouldCreate) => shouldCreate
+    ).then(() =>
+      createProductVariantsWorkflow.runAsStep({
+        input: variantsInput,
+      })
+    )
 
     // Authoritative ProductVariant <-> PrintOffering links, mapped back via the
     // print_offering_id mirrored into variant metadata.

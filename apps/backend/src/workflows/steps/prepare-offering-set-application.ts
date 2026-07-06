@@ -33,7 +33,11 @@ export type OfferingSetApplicationPlan = {
 export const prepareOfferingSetApplicationStep = createStep(
   "prepare-offering-set-application",
   async (
-    input: { product_id: string; offering_set_id: string },
+    input: {
+      product_id: string
+      offering_set_id: string
+      sells_digital?: boolean
+    },
     { container }
   ) => {
     const query = container.resolve(ContainerRegistrationKeys.QUERY)
@@ -112,8 +116,10 @@ export const prepareOfferingSetApplicationStep = createStep(
       }))
 
     const sellsDigital =
-      (product.metadata as Record<string, unknown> | null)?.sells_digital ===
-      true
+      typeof input.sells_digital === "boolean"
+        ? input.sells_digital
+        : (product.metadata as Record<string, unknown> | null)?.sells_digital ===
+          true
     const hasDigitalVariant = variants.some(
       (v) =>
         (v.metadata as Record<string, unknown> | null)?.fulfillment_type ===

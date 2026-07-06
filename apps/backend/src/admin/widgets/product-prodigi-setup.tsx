@@ -11,6 +11,7 @@ import {
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useEffect, useMemo, useState } from "react"
 import { sdk } from "../lib/client"
+import { invalidateProductQueries } from "../lib/invalidate-product-queries"
 import type { AdminOfferingSet } from "../lib/print-catalog-types"
 import { parseDigitalDownloadFiles } from "../../utils/digital-files"
 
@@ -230,20 +231,48 @@ const ProductProdigiSetupWidget = ({
     resolvedPrintUrl.trim() !== savedPrintAssetUrl.trim() ||
     resolvedDigitalUrl.trim() !== savedDigitalDownloadUrl.trim()
 
+  const persistPrintSettings = async () => {
+    const printAssetUrl = resolvedPrintUrl.trim()
+    const digitalDownloadUrl = resolvedDigitalUrl.trim()
+
+    await sdk.admin.product.update(product.id, {
+      metadata: {
+        ...metadata,
+        sells_digital: sellsDigital,
+        print_asset_url: printAssetUrl || null,
+        digital_download_files: digitalDownloadUrl
+          ? [{ url: digitalDownloadUrl }]
+          : null,
+      },
+    })
+  }
+
+  const refreshProductData = async () => {
+    await invalidateProductQueries(queryClient, product.id)
+    await queryClient.invalidateQueries({
+      queryKey: ["product-offering-set", product.id],
+    })
+    await queryClient.invalidateQueries({
+      queryKey: ["product-print-settings", product.id],
+    })
+  }
+
   const applySet = useMutation({
-    mutationFn: (offering_set_id: string) =>
-      sdk.client.fetch<{ created_variants: number }>(
+    mutationFn: async (offering_set_id: string) => {
+      if (settingsDirty) {
+        await persistPrintSettings()
+      }
+
+      return sdk.client.fetch<{ created_variants: number }>(
         `/admin/products/${product.id}/offering-set`,
         {
           method: "POST",
-          body: { offering_set_id },
+          body: { offering_set_id, sells_digital: sellsDigital },
         }
-      ),
-    onSuccess: (result) => {
-      queryClient.invalidateQueries({
-        queryKey: ["product-offering-set", product.id],
-      })
-      queryClient.invalidateQueries({ queryKey: ["products", product.id] })
+      )
+    },
+    onSuccess: async (result) => {
+      await refreshProductData()
       toast.success(
         `Offering set applied - ${result.created_variants} variant(s) created`
       )
@@ -256,19 +285,7 @@ const ProductProdigiSetupWidget = ({
 
   const saveSettings = useMutation({
     mutationFn: async () => {
-      const printAssetUrl = resolvedPrintUrl.trim()
-      const digitalDownloadUrl = resolvedDigitalUrl.trim()
-
-      await sdk.admin.product.update(product.id, {
-        metadata: {
-          ...metadata,
-          sells_digital: sellsDigital,
-          print_asset_url: printAssetUrl || null,
-          digital_download_files: digitalDownloadUrl
-            ? [{ url: digitalDownloadUrl }]
-            : null,
-        },
-      })
+      await persistPrintSettings()
 
       if (!sellsDigital || hasDigitalVariant) {
         return { createdDigitalVariant: false, needsOfferingSet: false }
@@ -286,7 +303,10 @@ const ProductProdigiSetupWidget = ({
         created_variants: number
       }>(`/admin/products/${product.id}/offering-set`, {
         method: "POST",
-        body: { offering_set_id: offering_set.id },
+        body: {
+          offering_set_id: offering_set.id,
+          sells_digital: sellsDigital,
+        },
       })
 
       return {
@@ -294,14 +314,8 @@ const ProductProdigiSetupWidget = ({
         needsOfferingSet: false,
       }
     },
-    onSuccess: ({ createdDigitalVariant, needsOfferingSet }) => {
-      queryClient.invalidateQueries({
-        queryKey: ["product-print-settings", product.id],
-      })
-      queryClient.invalidateQueries({ queryKey: ["products", product.id] })
-      queryClient.invalidateQueries({
-        queryKey: ["product-offering-set", product.id],
-      })
+    onSuccess: async ({ createdDigitalVariant, needsOfferingSet }) => {
+      await refreshProductData()
 
       if (createdDigitalVariant) {
         toast.success(
@@ -475,12 +489,12 @@ const ProductProdigiSetupWidget = ({
               Sell digital download
             </Text>
             <Text size="small" leading="compact" className="text-ui-fg-subtle">
-              Creates a &quot;Digital Download&quot; format variant (auto-added
-              when an offering set is already applied).
+              Creates a &quot;Digital Download&quot; format variant (included when
+              you apply or re-apply an offering set with this checked).
               {hasDigitalVariant
                 ? " Digital variant exists — set its price under Variants if needed."
                 : sellsDigital
-                  ? " Save to create it, or apply an offering set first."
+                  ? " Apply or save to create it."
                   : ""}
             </Text>
           </div>
