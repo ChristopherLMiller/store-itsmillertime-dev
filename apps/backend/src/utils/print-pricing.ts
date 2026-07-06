@@ -3,6 +3,24 @@ export function getDefaultMarkupPercent(): number {
   return Number.isFinite(parsed) ? parsed : 20
 }
 
+/**
+ * Markup applied to the Prodigi shipping cost at checkout. Prodigi bills the
+ * merchant for shipping on top of the item cost, so shipping must carry the
+ * same profit margin as the item price - otherwise the merchant only breaks
+ * even (or loses money) on delivery. Defaults to the product markup unless a
+ * dedicated shipping markup is configured.
+ */
+export function getShippingMarkupPercent(): number {
+  const raw = process.env.PRODIGI_SHIPPING_MARKUP_PERCENT
+  if (raw != null && raw.trim() !== "") {
+    const parsed = Number(raw)
+    if (Number.isFinite(parsed)) {
+      return parsed
+    }
+  }
+  return getDefaultMarkupPercent()
+}
+
 export function computeRetailPrice(
   unitCost: number,
   markupPercent: number

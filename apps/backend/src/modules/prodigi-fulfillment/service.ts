@@ -9,6 +9,10 @@ import type {
   FulfillmentOption,
 } from "@medusajs/framework/types"
 import ProdigiClient from "../prodigi/service"
+import {
+  computeRetailPrice,
+  getShippingMarkupPercent,
+} from "../../utils/print-pricing"
 
 export const PRODIGI_SHIPPING_METHODS = [
   { id: "Budget", name: "Budget Shipping" },
@@ -121,8 +125,23 @@ class ProdigiFulfillmentProviderService extends AbstractFulfillmentProviderServi
       )
     }
 
+    const shippingCost = parseFloat(quote.costSummary?.shipping?.amount ?? "")
+    if (!Number.isFinite(shippingCost)) {
+      throw new MedusaError(
+        MedusaError.Types.UNEXPECTED_STATE,
+        `Prodigi quote for ${shippingMethod} to ${countryCode} did not include a shipping cost`
+      )
+    }
+
+    // Prodigi bills the merchant for shipping in addition to the item cost, so
+    // charge the live shipping quote plus the configured markup. Without this
+    // the merchant only recovers Prodigi's raw shipping fee and makes no profit
+    // on delivery (and loses money if the item margin is thin).
     return {
-      calculated_amount: parseFloat(quote.costSummary.shipping.amount),
+      calculated_amount: computeRetailPrice(
+        shippingCost,
+        getShippingMarkupPercent()
+      ),
       is_calculated_price_tax_inclusive: false,
     }
   }
