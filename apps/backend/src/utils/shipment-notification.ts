@@ -2,7 +2,70 @@ import {
   buildProdigiFulfillmentView,
   parseProdigiShipmentsFromMetadata,
   prodigiReportsShipped,
+  type ProdigiShipmentSnapshot,
 } from "./prodigi-fulfillment-status"
+
+export type TrackingLine = {
+  carrier_name?: string | null
+  tracking_number?: string | null
+  tracking_url?: string | null
+}
+
+export type ShipmentNotificationContext = {
+  email: string | null
+  order_display_id: number | null
+  subject: string
+  customer_name: string | null
+  order_url: string | null
+  tracking: TrackingLine[]
+  store_name: string
+}
+
+export function buildTrackingLines(
+  fulfillment: Record<string, any>
+): TrackingLine[] {
+  const fromLabels = (fulfillment.labels ?? [])
+    .map((label: Record<string, unknown>) => ({
+      tracking_number:
+        typeof label.tracking_number === "string"
+          ? label.tracking_number
+          : null,
+      tracking_url:
+        typeof label.tracking_url === "string" ? label.tracking_url : null,
+    }))
+    .filter((line) => line.tracking_number || line.tracking_url)
+
+  if (fromLabels.length) {
+    return fromLabels
+  }
+
+  const prodigiShipments = parseProdigiShipmentsFromMetadata(
+    fulfillment.metadata as Record<string, unknown> | null | undefined
+  )
+
+  return prodigiShipments
+    .filter(
+      (shipment: ProdigiShipmentSnapshot) =>
+        shipment.tracking_number || shipment.tracking_url
+    )
+    .map((shipment) => ({
+      carrier_name: shipment.carrier_name,
+      tracking_number: shipment.tracking_number,
+      tracking_url: shipment.tracking_url,
+    }))
+}
+
+export function buildOrderUrl(order: Record<string, any>): string | null {
+  const storefrontUrl = process.env.STOREFRONT_URL?.replace(/\/$/, "")
+  if (!storefrontUrl) {
+    return null
+  }
+
+  const countryCode =
+    order.shipping_address?.country_code?.toLowerCase?.() ?? "us"
+
+  return `${storefrontUrl}/${countryCode}/account/orders/details/${order.id}`
+}
 
 export function fulfillmentHasTracking(
   fulfillment: Record<string, unknown>
