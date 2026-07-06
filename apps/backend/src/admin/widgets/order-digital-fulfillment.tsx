@@ -3,6 +3,7 @@ import type { DetailWidgetProps, HttpTypes } from "@medusajs/framework/types"
 import { Button, Container, StatusBadge, Text, toast } from "@medusajs/ui"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { sdk } from "../lib/client"
+import { invalidateOrderQueries } from "../lib/invalidate-order-queries"
 
 type DigitalStatus = {
   payment_captured: boolean
@@ -36,9 +37,9 @@ const OrderDigitalFulfillmentWidget = ({
         `/admin/orders/${order.id}/digital-fulfillment`,
         { method: "POST" }
       ),
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
+      await invalidateOrderQueries(queryClient, order.id)
       queryClient.invalidateQueries({ queryKey: ["order-digital", order.id] })
-      queryClient.invalidateQueries({ queryKey: ["order", order.id] })
       toast.success(
         `Digital delivery processed for ${result.line_items} item(s)`
       )

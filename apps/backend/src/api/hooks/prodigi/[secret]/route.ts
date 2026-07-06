@@ -1,5 +1,6 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { parseProdigiOrderStatus } from "../../../../utils/prodigi-fulfillment-status"
 import { processProdigiCallbackWorkflow } from "../../../../workflows/process-prodigi-callback"
 
 /**
@@ -22,15 +23,7 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     specversion?: string
     type?: string
     data?: {
-      order?: {
-        id?: string
-        merchantReference?: string
-        status?: { stage?: string }
-        shipments?: {
-          carrier?: { name?: string }
-          tracking?: { number?: string; url?: string }
-        }[]
-      }
+      order?: Record<string, unknown>
     }
   }
 
@@ -44,17 +37,10 @@ export async function POST(req: MedusaRequest, res: MedusaResponse) {
     return res.status(400).json({ message: "Invalid payload" })
   }
 
+  const statusUpdate = parseProdigiOrderStatus(order)
+
   await processProdigiCallbackWorkflow(req.scope).run({
-    input: {
-      prodigi_order_id: order.id,
-      medusa_order_id: order.merchantReference ?? null,
-      stage: order.status?.stage ?? "Unknown",
-      shipments: (order.shipments ?? []).map((s) => ({
-        carrier_name: s.carrier?.name ?? null,
-        tracking_number: s.tracking?.number ?? null,
-        tracking_url: s.tracking?.url ?? null,
-      })),
-    },
+    input: statusUpdate,
   })
 
   return res.status(200).json({ received: true })

@@ -1,18 +1,60 @@
 import { defineWidgetConfig } from "@medusajs/admin-sdk"
 import type { DetailWidgetProps, HttpTypes } from "@medusajs/framework/types"
+import { ArrowPath } from "@medusajs/icons"
 import { Button, Container, StatusBadge, Text, toast } from "@medusajs/ui"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { sdk } from "../lib/client"
+import { invalidateOrderQueries } from "../lib/invalidate-order-queries"
+
+type ProdigiShipmentSnapshot = {
+  status: string | null
+  carrier_name: string | null
+  tracking_number: string | null
+  tracking_url: string | null
+}
+
+type ProdigiFulfillmentView = {
+  fulfillment_id: string
+  prodigi_order_id: string
+  prodigi_stage: string | null
+  prodigi_shipping_status: string | null
+  prodigi_shipments: ProdigiShipmentSnapshot[]
+  display_status: string
+  shipped_at: string | null
+  delivered_at: string | null
+}
 
 type ProdigiStatus = {
   payment_captured: boolean
-  prodigi_fulfillment: {
-    fulfillment_id: string
-    prodigi_order_id: string
-    prodigi_stage: string | null
-    shipped_at: string | null
-    delivered_at: string | null
-  } | null
+  email_configured: boolean
+  can_resend_tracking: boolean
+  prodigi_fulfillment: ProdigiFulfillmentView | null
+}
+
+function badgeColor(displayStatus: string) {
+  switch (displayStatus) {
+    case "Delivered":
+      return "green" as const
+    case "Shipped":
+      return "blue" as const
+    case "Cancelled":
+      return "red" as const
+    default:
+      return "orange" as const
+  }
+}
+
+function formatTrackingSummary(shipments: ProdigiShipmentSnapshot[]) {
+  const tracked = shipments.filter((shipment) => shipment.tracking_number)
+  if (!tracked.length) {
+    return null
+  }
+
+  const first = tracked[0]
+  const suffix =
+    tracked.length > 1 ? ` (+${tracked.length - 1} more)` : ""
+
+  return `${first.carrier_name ?? "Carrier"} · ${first.tracking_number}${suffix}`
 }
 
 const OrderProdigiWidget = ({
@@ -34,9 +76,9 @@ const OrderProdigiWidget = ({
         `/admin/orders/${order.id}/prodigi-fulfillment`,
         { method: "POST" }
       ),
-    onSuccess: (result) => {
+    onSuccess: async (result) => {
+      await invalidateOrderQueries(queryClient, order.id)
       queryClient.invalidateQueries({ queryKey: ["order-prodigi", order.id] })
-      queryClient.invalidateQueries({ queryKey: ["order", order.id] })
       toast.success(`Submitted to Prodigi (${result.prodigi_order_id})`)
     },
     onError: (error: Error) => {
@@ -44,13 +86,51 @@ const OrderProdigiWidget = ({
     },
   })
 
+  const sync = useMutation({
+    mutationFn: () =>
+      sdk.client.fetch<{ display_status: string }>(
+        `/admin/orders/${order.id}/prodigi-fulfillment/sync`,
+        { method: "POST" }
+      ),
+    onSuccess: async (result) => {
+      await invalidateOrderQueries(queryClient, order.id)
+      await queryClient.invalidateQueries({
+        queryKey: ["order-prodigi", order.id],
+      })
+      toast.success(`Synced from Prodigi (${result.display_status})`)
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to sync from Prodigi")
+    },
+  })
+
+  const resendTracking = useMutation({
+    mutationFn: () =>
+      sdk.client.fetch<{ sent: boolean; to: string }>(
+        `/admin/orders/${order.id}/prodigi-fulfillment/resend-tracking`,
+        { method: "POST" }
+      ),
+    onSuccess: (result) => {
+      toast.success(`Tracking email sent to ${result.to}`)
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to resend tracking email")
+    },
+  })
+
   const fulfillment = status?.prodigi_fulfillment ?? null
   const captured = status?.payment_captured ?? false
+  const displayStatus = fulfillment?.display_status ?? "Submitted"
+  const trackingSummary = fulfillment
+    ? formatTrackingSummary(fulfillment.prodigi_shipments)
+    : null
+  const canResendTracking = status?.can_resend_tracking ?? false
+  const emailConfigured = status?.email_configured ?? false
 
   return (
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
-        <div>
+        <div className="min-w-0 flex-1">
           <Text size="small" leading="compact" weight="plus">
             Prodigi Fulfillment
           </Text>
@@ -63,34 +143,69 @@ const OrderProdigiWidget = ({
                   ? "Ready to submit"
                   : "Waiting for payment capture"}
           </Text>
+          {trackingSummary && (
+            <Text
+              size="small"
+              leading="compact"
+              className="text-ui-fg-subtle mt-1 truncate"
+            >
+              {trackingSummary}
+            </Text>
+          )}
+          {canResendTracking && !emailConfigured && (
+            <Text
+              size="small"
+              leading="compact"
+              className="text-ui-fg-error mt-1"
+            >
+              Resend is not configured — set RESEND_API_KEY and
+              RESEND_FROM_EMAIL.
+            </Text>
+          )}
         </div>
-        {fulfillment ? (
-          <StatusBadge
-            color={
-              fulfillment.delivered_at
-                ? "green"
-                : fulfillment.shipped_at
-                  ? "blue"
-                  : "orange"
-            }
-          >
-            {fulfillment.delivered_at
-              ? "Delivered"
-              : fulfillment.shipped_at
-                ? "Shipped"
-                : (fulfillment.prodigi_stage ?? "Submitted")}
-          </StatusBadge>
-        ) : (
+        <div className="ml-3 flex shrink-0 items-center gap-x-2">
+          {fulfillment ? (
+            <StatusBadge color={badgeColor(displayStatus)}>
+              {displayStatus}
+            </StatusBadge>
+          ) : (
+            <Button
+              size="small"
+              onClick={() => submit.mutate()}
+              isLoading={submit.isPending}
+              disabled={!captured || isLoading}
+            >
+              Submit to Prodigi
+            </Button>
+          )}
+        </div>
+      </div>
+
+      {fulfillment && (
+        <div className="flex flex-wrap justify-end gap-2 px-6 py-4">
           <Button
             size="small"
-            onClick={() => submit.mutate()}
-            isLoading={submit.isPending}
-            disabled={!captured || isLoading}
+            variant="secondary"
+            onClick={() => sync.mutate()}
+            isLoading={sync.isPending}
+            disabled={isLoading}
           >
-            Submit to Prodigi
+            <ArrowPath className="mr-1" />
+            Sync
           </Button>
-        )}
-      </div>
+          {canResendTracking && (
+            <Button
+              size="small"
+              variant="secondary"
+              onClick={() => resendTracking.mutate()}
+              isLoading={resendTracking.isPending}
+              disabled={!emailConfigured || isLoading}
+            >
+              Resend tracking
+            </Button>
+          )}
+        </div>
+      )}
     </Container>
   )
 }

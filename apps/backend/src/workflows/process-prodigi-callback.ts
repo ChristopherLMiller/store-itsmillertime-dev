@@ -12,17 +12,12 @@ import {
 } from "@medusajs/framework/utils"
 import type { IFulfillmentModuleService } from "@medusajs/framework/types"
 import { createOrderShipmentWorkflow } from "@medusajs/medusa/core-flows"
+import {
+  prodigiReportsShipped,
+  type ProdigiStatusUpdateInput,
+} from "../utils/prodigi-fulfillment-status"
 
-export type ProdigiCallbackInput = {
-  prodigi_order_id: string
-  medusa_order_id: string | null
-  stage: string
-  shipments: {
-    carrier_name: string | null
-    tracking_number: string | null
-    tracking_url: string | null
-  }[]
-}
+export type ProdigiCallbackInput = ProdigiStatusUpdateInput
 
 type CallbackTarget = {
   found: boolean
@@ -106,12 +101,9 @@ const resolveCallbackTargetStep = createStep(
   }
 )
 
-const updateFulfillmentStageStep = createStep(
-  "update-fulfillment-stage",
-  async (
-    input: { fulfillment_id: string | null; stage: string },
-    { container }
-  ) => {
+const updateFulfillmentProdigiMetadataStep = createStep(
+  "update-fulfillment-prodigi-metadata",
+  async (input: ProdigiCallbackInput & { fulfillment_id: string | null }, { container }) => {
     if (!input.fulfillment_id) {
       return new StepResponse(null)
     }
@@ -128,6 +120,9 @@ const updateFulfillmentStageStep = createStep(
       metadata: {
         ...(existing.metadata ?? {}),
         prodigi_stage: input.stage,
+        prodigi_shipping_status: input.shipping_status,
+        prodigi_shipments: input.shipments,
+        prodigi_synced_at: new Date().toISOString(),
       },
     })
 
@@ -140,39 +135,52 @@ export const processProdigiCallbackWorkflow = createWorkflow(
   function (input: ProdigiCallbackInput) {
     const target = resolveCallbackTargetStep(input)
 
-    const stageUpdate = transform({ target, input }, ({ target, input }) => ({
+    const metadataUpdate = transform({ target, input }, ({ target, input }) => ({
       fulfillment_id: target.fulfillment_id,
-      stage: input.stage,
+      ...input,
     }))
 
-    updateFulfillmentStageStep(stageUpdate)
+    updateFulfillmentProdigiMetadataStep(metadataUpdate)
 
-    // Create the Medusa shipment (with tracking) exactly once, when Prodigi
-    // reports tracked shipments for a not-yet-shipped fulfillment.
     const shouldCreateShipment = transform(
       { target, input },
-      ({ target, input }) =>
-        target.found &&
-        !target.already_shipped &&
-        target.shipment_items.length > 0 &&
-        input.shipments.some((s) => !!s.tracking_number)
+      ({ target, input }) => {
+        if (
+          !target.found ||
+          target.already_shipped ||
+          target.shipment_items.length === 0
+        ) {
+          return false
+        }
+
+        const shipped = prodigiReportsShipped(input)
+        const hasTracking = input.shipments.some(
+          (shipment) => !!shipment.tracking_number
+        )
+
+        return shipped || hasTracking
+      }
     )
 
     when(shouldCreateShipment, (should) => should).then(() => {
       const shipmentInput = transform(
         { target, input },
-        ({ target, input }) => ({
-          order_id: target.order_id as string,
-          fulfillment_id: target.fulfillment_id as string,
-          items: target.shipment_items,
-          labels: input.shipments
-            .filter((s) => !!s.tracking_number)
-            .map((s) => ({
-              tracking_number: s.tracking_number as string,
-              tracking_url: s.tracking_url ?? "",
+        ({ target, input }) => {
+          const labels = input.shipments
+            .filter((shipment) => !!shipment.tracking_number)
+            .map((shipment) => ({
+              tracking_number: shipment.tracking_number as string,
+              tracking_url: shipment.tracking_url ?? "",
               label_url: "",
-            })),
-        })
+            }))
+
+          return {
+            order_id: target.order_id as string,
+            fulfillment_id: target.fulfillment_id as string,
+            items: target.shipment_items,
+            ...(labels.length ? { labels } : {}),
+          }
+        }
       )
 
       createOrderShipmentWorkflow.runAsStep({ input: shipmentInput })

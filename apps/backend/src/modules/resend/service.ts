@@ -12,12 +12,14 @@ import {
   Resend
 } from "resend";
 import { orderPlacedEmail } from "./emails/order-placed";
+import { orderShippedEmail } from "./emails/order-shipped";
 import { userInvitedEmail } from "./emails/user-invited";
 import { passwordResetEmail } from "./emails/password-reset";
 import { digitalDownloadEmail } from "./emails/digital-download";
 
 enum Templates {
   ORDER_PLACED = "order-placed",
+  ORDER_SHIPPED = "order-shipped",
   USER_INVITED = "user-invited",
   PASSWORD_RESET = "password-reset",
   DIGITAL_DOWNLOAD = "digital-download",
@@ -25,6 +27,7 @@ enum Templates {
 
 const templates: {[key in Templates]?: (props: unknown) => React.ReactNode} = {
   [Templates.ORDER_PLACED]: orderPlacedEmail,
+  [Templates.ORDER_SHIPPED]: orderShippedEmail,
   [Templates.USER_INVITED]: userInvitedEmail,
   [Templates.PASSWORD_RESET]: passwordResetEmail,
   [Templates.DIGITAL_DOWNLOAD]: digitalDownloadEmail,
@@ -99,6 +102,10 @@ class ResendNotificationProviderService extends AbstractNotificationProviderServ
     switch(template) {
       case Templates.ORDER_PLACED:
         return "Order Confirmation"
+      case Templates.ORDER_SHIPPED:
+        return data?.order_display_id
+          ? `Your order #${data.order_display_id} has shipped`
+          : "Your order has shipped"
       case Templates.USER_INVITED:
         return "You're Invited!"
       case Templates.PASSWORD_RESET:

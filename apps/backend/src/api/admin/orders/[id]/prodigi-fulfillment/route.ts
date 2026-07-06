@@ -3,6 +3,9 @@ import type {
   MedusaResponse,
 } from "@medusajs/framework/http"
 import { ContainerRegistrationKeys } from "@medusajs/framework/utils"
+import { buildProdigiFulfillmentView } from "../../../../../utils/prodigi-fulfillment-status"
+import { isResendConfigured } from "../../../../../utils/email"
+import { canResendTrackingEmail } from "../../../../../utils/shipment-notification"
 import { submitOrderToProdigiWorkflow } from "../../../../../workflows/submit-order-to-prodigi"
 
 export async function GET(
@@ -22,6 +25,8 @@ export async function GET(
       "fulfillments.metadata",
       "fulfillments.shipped_at",
       "fulfillments.delivered_at",
+      "fulfillments.labels.tracking_number",
+      "fulfillments.labels.tracking_url",
     ],
     filters: { id },
   })
@@ -38,15 +43,11 @@ export async function GET(
 
   return res.json({
     payment_captured: paymentCaptured,
+    email_configured: isResendConfigured(),
     prodigi_fulfillment: prodigiFulfillment
-      ? {
-          fulfillment_id: prodigiFulfillment.id,
-          prodigi_order_id: prodigiFulfillment.metadata.prodigi_order_id,
-          prodigi_stage: prodigiFulfillment.metadata.prodigi_stage ?? null,
-          shipped_at: prodigiFulfillment.shipped_at,
-          delivered_at: prodigiFulfillment.delivered_at,
-        }
+      ? buildProdigiFulfillmentView(prodigiFulfillment)
       : null,
+    can_resend_tracking: canResendTrackingEmail(order, prodigiFulfillment),
   })
 }
 
