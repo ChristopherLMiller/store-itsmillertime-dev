@@ -2,6 +2,7 @@ import { defineMiddlewares } from "@medusajs/framework/http"
 import { printOfferingsMiddlewares } from "./admin/print-offerings/middlewares"
 import { offeringSetsMiddlewares } from "./admin/offering-sets/middlewares"
 import { productOfferingSetMiddlewares } from "./admin/products/[id]/offering-set/middlewares"
+import { storeShippingOptionsMiddlewares } from "./store/shipping-options/middlewares"
 
 // Multipart uploads bypass JSON body parsers; this raises limits for any
 // non-multipart upload routes and documents intent alongside admin.maxUploadFileSize.
@@ -26,5 +27,6 @@ export default defineMiddlewares({
     ...printOfferingsMiddlewares,
     ...offeringSetsMiddlewares,
     ...productOfferingSetMiddlewares,
+    ...storeShippingOptionsMiddlewares,
   ],
 })
