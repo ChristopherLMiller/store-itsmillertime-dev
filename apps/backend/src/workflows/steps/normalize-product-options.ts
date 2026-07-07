@@ -4,15 +4,22 @@ import {
   Modules,
 } from "@medusajs/framework/utils"
 import type { IProductModuleService } from "@medusajs/framework/types"
-import { FORMAT_OPTION_TITLE } from "./prepare-offering-set-application"
+import {
+  FORMAT_OPTION_TITLE,
+  PAPER_OPTION_TITLE,
+} from "./prepare-offering-set-application"
+
+const ALLOWED_OPTION_TITLES = new Set([
+  FORMAT_OPTION_TITLE,
+  PAPER_OPTION_TITLE,
+])
 
 type NormalizeCompensation = {
   removed_variant_ids: string[]
 }
 
-// Photo products use a single "Format" option. Medusa's default product
-// template adds an extra option + variant; remove those before we create print
-// variants so Medusa receives one option value per variant.
+// Photo products use Paper + Format options. Medusa's default product template
+// adds an extra option + variant; remove those before we create print variants.
 export const normalizeProductOptionsStep = createStep(
   "normalize-product-options",
   async (input: { product_id: string }, { container }) => {
@@ -60,7 +67,7 @@ export const normalizeProductOptionsStep = createStep(
       .map((variant) => variant.id)
 
     const removedOptionIds = options
-      .filter((option) => option.title !== FORMAT_OPTION_TITLE)
+      .filter((option) => !ALLOWED_OPTION_TITLES.has(option.title ?? ""))
       .map((option) => option.id)
 
     if (removedVariantIds.length) {

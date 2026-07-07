@@ -2,11 +2,14 @@ import { defineLink } from "@medusajs/framework/utils"
 import ProductModule from "@medusajs/medusa/product"
 import PrintCatalogModule from "../modules/print-catalog"
 
-// One OfferingSet can be subscribed to by many Products; each Product has at most one set.
+// Many products can share a set; each product can subscribe to many sets.
 export default defineLink(
   {
     linkable: ProductModule.linkable.product,
     isList: true,
   },
-  PrintCatalogModule.linkable.offeringSet
+  {
+    linkable: PrintCatalogModule.linkable.offeringSet,
+    isList: true,
+  }
 )

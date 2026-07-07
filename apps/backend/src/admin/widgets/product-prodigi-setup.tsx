@@ -16,6 +16,7 @@ import type { AdminOfferingSet } from "../lib/print-catalog-types"
 import { parseDigitalDownloadFiles } from "../../utils/digital-files"
 
 const FORMAT_OPTION_TITLE = "Format"
+const PAPER_OPTION_TITLE = "Paper"
 
 function getPrimaryImageUrl(product: HttpTypes.AdminProduct): string | null {
   if (product.thumbnail) {
@@ -57,6 +58,10 @@ function isPhotoProduct(
   }
 
   if (product.options?.some((option) => option.title === FORMAT_OPTION_TITLE)) {
+    return true
+  }
+
+  if (product.options?.some((option) => option.title === PAPER_OPTION_TITLE)) {
     return true
   }
 
@@ -135,7 +140,7 @@ const ProductProdigiSetupWidget = ({
     queryKey: ["product-offering-set", product.id],
     queryFn: () =>
       sdk.client.fetch<{
-        offering_set: { id: string; name: string } | null
+        offering_sets: { id: string; name: string }[]
       }>(`/admin/products/${product.id}/offering-set`),
   })
 
@@ -174,17 +179,16 @@ const ProductProdigiSetupWidget = ({
     [fullProduct.variants]
   )
 
-  const currentSet = currentData?.offering_set ?? null
+  const attachedSets = currentData?.offering_sets ?? []
   const sets = setsData?.offering_sets ?? []
   const defaultSet = sets.find((set) => set.is_default)
+  const attachedSetIds = new Set(attachedSets.map((set) => set.id))
+  const availableSets = sets.filter((set) => !attachedSetIds.has(set.id))
 
-  useHideAttributesForPhotoProducts(fullProduct, !!currentSet)
+  useHideAttributesForPhotoProducts(fullProduct, attachedSets.length > 0)
 
   const effectiveSelection =
-    selectedSetId ?? currentSet?.id ?? defaultSet?.id ?? undefined
-
-  const isReapply =
-    !!currentSet && effectiveSelection === currentSet.id
+    selectedSetId ?? availableSets[0]?.id ?? defaultSet?.id ?? undefined
 
   useEffect(() => {
     setSellsDigital(metadata.sells_digital === true)
@@ -283,6 +287,51 @@ const ProductProdigiSetupWidget = ({
     },
   })
 
+  const removeSet = useMutation({
+    mutationFn: async (offering_set_id: string) =>
+      sdk.client.fetch<{ removed_variants: number }>(
+        `/admin/products/${product.id}/offering-set`,
+        {
+          method: "DELETE",
+          body: { offering_set_id },
+        }
+      ),
+    onSuccess: async (result) => {
+      await refreshProductData()
+      toast.success(
+        `Offering set removed - ${result.removed_variants} variant(s) deleted`
+      )
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to remove offering set")
+    },
+  })
+
+  const reapplySet = useMutation({
+    mutationFn: async (offering_set_id: string) => {
+      if (settingsDirty) {
+        await persistPrintSettings()
+      }
+
+      return sdk.client.fetch<{ created_variants: number }>(
+        `/admin/products/${product.id}/offering-set`,
+        {
+          method: "POST",
+          body: { offering_set_id, sells_digital: sellsDigital },
+        }
+      )
+    },
+    onSuccess: async (result) => {
+      await refreshProductData()
+      toast.success(
+        `Offering set re-applied - ${result.created_variants} variant(s) created or updated`
+      )
+    },
+    onError: (error: Error) => {
+      toast.error(error.message || "Failed to re-apply offering set")
+    },
+  })
+
   const saveSettings = useMutation({
     mutationFn: async () => {
       await persistPrintSettings()
@@ -291,11 +340,13 @@ const ProductProdigiSetupWidget = ({
         return { createdDigitalVariant: false, needsOfferingSet: false }
       }
 
-      const { offering_set } = await sdk.client.fetch<{
-        offering_set: { id: string; name: string } | null
+      const { offering_sets } = await sdk.client.fetch<{
+        offering_sets: { id: string; name: string }[]
       }>(`/admin/products/${product.id}/offering-set`)
 
-      if (!offering_set?.id) {
+      const offeringSetId = offering_sets[0]?.id
+
+      if (!offeringSetId) {
         return { createdDigitalVariant: false, needsOfferingSet: true }
       }
 
@@ -304,7 +355,7 @@ const ProductProdigiSetupWidget = ({
       }>(`/admin/products/${product.id}/offering-set`, {
         method: "POST",
         body: {
-          offering_set_id: offering_set.id,
+          offering_set_id: offeringSetId,
           sells_digital: sellsDigital,
         },
       })
@@ -364,33 +415,71 @@ const ProductProdigiSetupWidget = ({
       <div className="flex items-center justify-between px-6 py-4">
         <div>
           <Text size="small" leading="compact" weight="plus">
-            Prodigi offering set
+            Prodigi offering sets
           </Text>
           <Text size="small" leading="compact" className="text-ui-fg-subtle">
             {isLoading
               ? "Loading..."
-              : currentSet
-                ? `Subscribed to "${currentSet.name}"`
-                : "Not subscribed to a set"}
+              : attachedSets.length
+                ? `${attachedSets.length} set(s) attached`
+                : "No offering sets attached"}
           </Text>
         </div>
       </div>
+
+      {attachedSets.length > 0 && (
+        <div className="flex flex-col gap-y-2 px-6 py-4">
+          {attachedSets.map((set) => (
+            <div
+              key={set.id}
+              className="flex items-center justify-between gap-x-2 rounded-md border border-ui-border-base px-3 py-2"
+            >
+              <Text size="small" leading="compact">
+                {set.name}
+              </Text>
+              <div className="flex items-center gap-x-2">
+                <Button
+                  size="small"
+                  variant="secondary"
+                  onClick={() => reapplySet.mutate(set.id)}
+                  isLoading={reapplySet.isPending}
+                >
+                  Re-apply
+                </Button>
+                <Button
+                  size="small"
+                  variant="danger"
+                  onClick={() => removeSet.mutate(set.id)}
+                  isLoading={removeSet.isPending}
+                >
+                  Remove
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <div className="flex items-center gap-x-2 px-6 py-4">
         <div className="flex-1">
           <Select
             value={effectiveSelection}
             onValueChange={setSelectedSetId}
-            disabled={applySet.isPending || !sets.length}
+            disabled={applySet.isPending || !availableSets.length}
           >
             <Select.Trigger>
               <Select.Value
                 placeholder={
-                  sets.length ? "Select an offering set" : "No sets available"
+                  availableSets.length
+                    ? "Add an offering set"
+                    : sets.length
+                      ? "All sets are attached"
+                      : "No sets available"
                 }
               />
             </Select.Trigger>
             <Select.Content>
-              {sets.map((set) => (
+              {availableSets.map((set) => (
                 <Select.Item key={set.id} value={set.id}>
                   {set.name}
                   {set.is_default ? " (default)" : ""}
@@ -405,13 +494,9 @@ const ProductProdigiSetupWidget = ({
             effectiveSelection && applySet.mutate(effectiveSelection)
           }
           isLoading={applySet.isPending}
-          disabled={!effectiveSelection}
+          disabled={!effectiveSelection || !availableSets.length}
         >
-          {currentSet
-            ? isReapply
-              ? "Re-apply"
-              : "Switch set"
-            : "Apply set"}
+          Add set
         </Button>
       </div>
 
@@ -490,7 +575,7 @@ const ProductProdigiSetupWidget = ({
             </Text>
             <Text size="small" leading="compact" className="text-ui-fg-subtle">
               Creates a &quot;Digital Download&quot; format variant (included when
-              you apply or re-apply an offering set with this checked).
+              you apply or re-apply any offering set with this checked).
               {hasDigitalVariant
                 ? " Digital variant exists — set its price under Variants if needed."
                 : sellsDigital

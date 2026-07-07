@@ -9,16 +9,18 @@ import type { LinkDefinition } from "@medusajs/framework/types"
 import {
   createProductVariantsWorkflow,
   createRemoteLinkStep,
-  dismissRemoteLinkStep,
+  updateProductVariantsWorkflow,
 } from "@medusajs/medusa/core-flows"
 import { PRINT_CATALOG_MODULE } from "../modules/print-catalog"
 import {
   DIGITAL_FORMAT_VALUE,
+  DIGITAL_PAPER_VALUE,
   FORMAT_OPTION_TITLE,
+  PAPER_OPTION_TITLE,
   prepareOfferingSetApplicationStep,
 } from "./steps/prepare-offering-set-application"
 import { normalizeProductOptionsStep } from "./steps/normalize-product-options"
-import { ensureFormatOptionStep } from "./steps/ensure-format-option"
+import { ensurePrintOptionsStep } from "./steps/ensure-print-options"
 import { buildVariantPrices } from "../utils/print-pricing"
 
 export type ApplyOfferingSetToProductInput = {
@@ -34,22 +36,23 @@ export const applyOfferingSetToProductWorkflow = createWorkflow(
 
     const plan = prepareOfferingSetApplicationStep(input)
 
-    ensureFormatOptionStep(plan)
+    ensurePrintOptionsStep(plan)
 
     const variantsInput = transform({ plan }, ({ plan }) => ({
       product_variants: [
         ...plan.variants_to_create.map((v) => ({
           product_id: plan.product_id,
-          title: v.label,
-          options: { [FORMAT_OPTION_TITLE]: v.label },
+          title: `${v.paper_name} · ${v.label}`,
+          options: {
+            [PAPER_OPTION_TITLE]: v.paper_name,
+            [FORMAT_OPTION_TITLE]: v.label,
+          },
           manage_inventory: false,
           prices: buildVariantPrices(v.retail_price, v.price_currency),
-          // Parseable mirror of the Prodigi SKU; line items snapshot variant
-          // sku, which is the only SKU-ish field available to the fulfillment
-          // provider's calculatePrice. The module link stays authoritative.
           sku: `${v.prodigi_sku}__${plan.product_id}`,
           metadata: {
             print_offering_id: v.offering_id,
+            offering_set_id: plan.offering_set_id,
             prodigi_sku: v.prodigi_sku,
             print_category: v.category,
             width: v.width,
@@ -63,7 +66,10 @@ export const applyOfferingSetToProductWorkflow = createWorkflow(
               {
                 product_id: plan.product_id,
                 title: DIGITAL_FORMAT_VALUE,
-                options: { [FORMAT_OPTION_TITLE]: DIGITAL_FORMAT_VALUE },
+                options: {
+                  [PAPER_OPTION_TITLE]: DIGITAL_PAPER_VALUE,
+                  [FORMAT_OPTION_TITLE]: DIGITAL_FORMAT_VALUE,
+                },
                 manage_inventory: false,
                 metadata: {
                   fulfillment_type: "digital",
@@ -87,8 +93,31 @@ export const applyOfferingSetToProductWorkflow = createWorkflow(
       })
     )
 
-    // Authoritative ProductVariant <-> PrintOffering links, mapped back via the
-    // print_offering_id mirrored into variant metadata.
+    const upgradeInput = transform({ plan }, ({ plan }) => ({
+      product_variants: plan.variants_to_upgrade.map((variant) => ({
+        id: variant.variant_id,
+        title: `${variant.paper_name} · ${variant.format_label}`,
+        options: {
+          [PAPER_OPTION_TITLE]: variant.paper_name,
+          [FORMAT_OPTION_TITLE]: variant.format_label,
+        },
+        metadata: {
+          offering_set_id: plan.offering_set_id,
+        },
+      })),
+    }))
+
+    const hasVariantsToUpgrade = transform(
+      { plan },
+      ({ plan }) => plan.variants_to_upgrade.length > 0
+    )
+
+    when(hasVariantsToUpgrade, (shouldUpgrade) => shouldUpgrade).then(() =>
+      updateProductVariantsWorkflow.runAsStep({
+        input: upgradeInput,
+      })
+    )
+
     const variantLinks = transform(
       { createdVariants },
       ({ createdVariants }) =>
@@ -115,25 +144,8 @@ export const applyOfferingSetToProductWorkflow = createWorkflow(
       name: "create-variant-offering-links",
     })
 
-    // If the product was subscribed to a different set, unlink it first.
-    const staleSetLinks = transform({ plan }, ({ plan }) =>
-      plan.previous_offering_set_id &&
-      plan.previous_offering_set_id !== plan.offering_set_id
-        ? [
-            {
-              [Modules.PRODUCT]: { product_id: plan.product_id },
-              [PRINT_CATALOG_MODULE]: {
-                offering_set_id: plan.previous_offering_set_id,
-              },
-            } as LinkDefinition,
-          ]
-        : []
-    )
-
-    dismissRemoteLinkStep(staleSetLinks)
-
     const setLinks = transform({ plan }, ({ plan }) =>
-      plan.previous_offering_set_id === plan.offering_set_id
+      plan.already_linked
         ? []
         : [
             {

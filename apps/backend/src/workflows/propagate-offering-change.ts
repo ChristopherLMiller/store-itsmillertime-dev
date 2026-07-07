@@ -12,6 +12,10 @@ import { updateProductVariantsWorkflow } from "@medusajs/medusa/core-flows"
 import type { IProductModuleService } from "@medusajs/framework/types"
 import { buildVariantPrices } from "../utils/print-pricing"
 import { findLinkedVariants } from "../utils/linked-variants"
+import {
+  FORMAT_OPTION_TITLE,
+  PAPER_OPTION_TITLE,
+} from "./steps/prepare-offering-set-application"
 
 const CHUNK_SIZE = 50
 
@@ -19,6 +23,24 @@ type LinkedVariant = {
   id: string
   product_id: string
   metadata: Record<string, unknown> | null
+  options?: ({
+    option?: { title?: string | null } | null
+    value?: string | null
+  } | null)[] | null
+}
+
+function getOptionValueByTitle(
+  variant: LinkedVariant,
+  title: string
+): string | undefined {
+  return variant.options
+    ?.find((entry) => entry?.option?.title === title)
+    ?.value?.trim() || undefined
+}
+
+function buildVariantTitle(variant: LinkedVariant, offeringLabel: string) {
+  const paper = getOptionValueByTitle(variant, PAPER_OPTION_TITLE)
+  return paper ? `${paper} · ${offeringLabel}` : offeringLabel
 }
 
 type OfferingWithVariants = {
@@ -108,7 +130,7 @@ const updateLinkedVariantsStep = createStep(
       await productModule.upsertProductVariants(
         batch.map((variant) => ({
           id: variant.id,
-          title: offering.label,
+          title: buildVariantTitle(variant, offering.label),
           sku: `${offering.prodigi_sku}__${variant.product_id}`,
           metadata: {
             ...(variant.metadata ?? {}),
@@ -118,6 +140,13 @@ const updateLinkedVariantsStep = createStep(
             height: offering.height,
             substrate: offering.substrate,
           },
+          ...(getOptionValueByTitle(variant, FORMAT_OPTION_TITLE)
+            ? {
+                options: {
+                  [FORMAT_OPTION_TITLE]: offering.label,
+                },
+              }
+            : {}),
         }))
       )
 

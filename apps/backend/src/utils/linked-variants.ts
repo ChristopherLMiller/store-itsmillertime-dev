@@ -4,6 +4,10 @@ export type LinkedVariant = {
   id: string
   product_id: string
   metadata: Record<string, unknown> | null
+  options?: ({
+    option?: { title?: string | null } | null
+    value?: string | null
+  } | null)[] | null
 }
 
 export async function findLinkedVariants(
@@ -21,6 +25,8 @@ export async function findLinkedVariants(
       "product_variants.id",
       "product_variants.product_id",
       "product_variants.metadata",
+      "product_variants.options.option.title",
+      "product_variants.options.value",
     ],
     filters: { id: offeringId },
   })
@@ -36,7 +42,7 @@ export async function findLinkedVariants(
 
   const { data: variantData } = await query.graph({
     entity: "product_variant",
-    fields: ["id", "product_id", "metadata", "print_offering.id"],
+    fields: ["id", "product_id", "metadata", "print_offering.id", "options.option.title", "options.value"],
     filters: {
       print_offering: { id: offeringId },
     },
