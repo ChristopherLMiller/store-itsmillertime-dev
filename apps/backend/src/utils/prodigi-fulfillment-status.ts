@@ -1,3 +1,9 @@
+import {
+  buildProdigiDashboardOrderUrl,
+  resolveStoredProdigiEnvironment,
+  type ProdigiEnvironment,
+} from "./prodigi-dashboard-url"
+
 export type ProdigiShipmentSnapshot = {
   status: string | null
   carrier_name: string | null
@@ -13,7 +19,7 @@ export type ProdigiStatusUpdateInput = {
   shipments: ProdigiShipmentSnapshot[]
 }
 
-type ProdigiOrderLike = {
+export type ProdigiOrderLike = {
   id?: string
   merchantReference?: string | null
   status?: {
@@ -140,9 +146,16 @@ export function buildProdigiFulfillmentView(fulfillment: {
       ? metadata.prodigi_shipping_status
       : null
 
+  const prodigiOrderId = String(metadata.prodigi_order_id ?? "")
+  const prodigi_environment = resolveStoredProdigiEnvironment(metadata)
+
   return {
     fulfillment_id: fulfillment.id,
-    prodigi_order_id: String(metadata.prodigi_order_id ?? ""),
+    prodigi_order_id: prodigiOrderId,
+    prodigi_environment,
+    prodigi_dashboard_url: prodigiOrderId
+      ? buildProdigiDashboardOrderUrl(prodigiOrderId, prodigi_environment)
+      : null,
     prodigi_stage,
     prodigi_shipping_status,
     prodigi_shipments,

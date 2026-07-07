@@ -4,11 +4,19 @@ import {
   prodigiReportsShipped,
   type ProdigiShipmentSnapshot,
 } from "./prodigi-fulfillment-status"
+import { buildStorefrontOrderUrl } from "./notification-urls"
 
 export type TrackingLine = {
   carrier_name?: string | null
   tracking_number?: string | null
   tracking_url?: string | null
+}
+
+export type ShipmentItemLine = {
+  title: string
+  variant_title?: string | null
+  thumbnail?: string | null
+  quantity: number
 }
 
 export type ShipmentNotificationContext = {
@@ -19,6 +27,11 @@ export type ShipmentNotificationContext = {
   order_url: string | null
   tracking: TrackingLine[]
   store_name: string
+  items: ShipmentItemLine[]
+  shipping_method_name: string | null
+  shipping_address_summary: string | null
+  currency_code: string
+  order_total: number | string | null
 }
 
 export function buildTrackingLines(
@@ -56,15 +69,30 @@ export function buildTrackingLines(
 }
 
 export function buildOrderUrl(order: Record<string, any>): string | null {
-  const storefrontUrl = process.env.STOREFRONT_URL?.replace(/\/$/, "")
-  if (!storefrontUrl) {
-    return null
-  }
+  return buildStorefrontOrderUrl(order)
+}
 
-  const countryCode =
-    order.shipping_address?.country_code?.toLowerCase?.() ?? "us"
+export function buildShipmentItems(
+  fulfillment: Record<string, any>,
+  orderItems: Record<string, any>[] | undefined
+): ShipmentItemLine[] {
+  const shippedLineItemIds = new Set(
+    (fulfillment.items ?? [])
+      .map((item: Record<string, unknown>) => item?.line_item_id)
+      .filter((id): id is string => typeof id === "string")
+  )
 
-  return `${storefrontUrl}/${countryCode}/account/orders/details/${order.id}`
+  const relevantItems =
+    shippedLineItemIds.size > 0
+      ? (orderItems ?? []).filter((item) => shippedLineItemIds.has(item.id))
+      : (orderItems ?? [])
+
+  return relevantItems.map((item) => ({
+    title: item.product_title || item.title || "Item",
+    variant_title: item.variant_title ?? null,
+    thumbnail: item.thumbnail ?? null,
+    quantity: Number(item.quantity) || 1,
+  }))
 }
 
 export function fulfillmentHasTracking(

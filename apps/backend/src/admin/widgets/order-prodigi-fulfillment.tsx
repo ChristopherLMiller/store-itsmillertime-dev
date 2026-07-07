@@ -16,6 +16,8 @@ type ProdigiShipmentSnapshot = {
 type ProdigiFulfillmentView = {
   fulfillment_id: string
   prodigi_order_id: string
+  prodigi_environment: "sandbox" | "live"
+  prodigi_dashboard_url: string | null
   prodigi_stage: string | null
   prodigi_shipping_status: string | null
   prodigi_shipments: ProdigiShipmentSnapshot[]
@@ -42,6 +44,14 @@ function badgeColor(displayStatus: string) {
     default:
       return "orange" as const
   }
+}
+
+function environmentBadgeColor(environment: ProdigiFulfillmentView["prodigi_environment"]) {
+  return environment === "live" ? ("green" as const) : ("purple" as const)
+}
+
+function environmentLabel(environment: ProdigiFulfillmentView["prodigi_environment"]) {
+  return environment === "live" ? "Live" : "Sandbox"
 }
 
 function formatTrackingSummary(shipments: ProdigiShipmentSnapshot[]) {
@@ -165,9 +175,14 @@ const OrderProdigiWidget = ({
         </div>
         <div className="ml-3 flex shrink-0 items-center gap-x-2">
           {fulfillment ? (
-            <StatusBadge color={badgeColor(displayStatus)}>
-              {displayStatus}
-            </StatusBadge>
+            <>
+              <StatusBadge color={environmentBadgeColor(fulfillment.prodigi_environment)}>
+                {environmentLabel(fulfillment.prodigi_environment)}
+              </StatusBadge>
+              <StatusBadge color={badgeColor(displayStatus)}>
+                {displayStatus}
+              </StatusBadge>
+            </>
           ) : (
             <Button
               size="small"
@@ -183,6 +198,17 @@ const OrderProdigiWidget = ({
 
       {fulfillment && (
         <div className="flex flex-wrap justify-end gap-2 px-6 py-4">
+          {fulfillment.prodigi_dashboard_url && (
+            <Button size="small" variant="secondary" asChild>
+              <a
+                href={fulfillment.prodigi_dashboard_url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Open in Prodigi
+              </a>
+            </Button>
+          )}
           <Button
             size="small"
             variant="secondary"

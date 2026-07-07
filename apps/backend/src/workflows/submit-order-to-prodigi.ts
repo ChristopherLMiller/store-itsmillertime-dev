@@ -13,6 +13,7 @@ import { createOrderFulfillmentWorkflow } from "@medusajs/medusa/core-flows"
 import { PRODIGI_MODULE } from "../modules/prodigi"
 import type ProdigiModuleService from "../modules/prodigi/service"
 import { parseProdigiSku } from "../modules/prodigi-fulfillment/service"
+import { resolveEcommerceEnvironment } from "../utils/ecommerce-environment"
 
 export type SubmitOrderToProdigiInput = {
   order_id: string
@@ -284,6 +285,7 @@ export const submitOrderToProdigiWorkflow = createWorkflow(
         metadata: {
           prodigi_order_id: prodigiOrder.prodigi_order_id,
           prodigi_stage: prodigiOrder.stage,
+          prodigi_environment: resolveEcommerceEnvironment(),
         },
       })
     )

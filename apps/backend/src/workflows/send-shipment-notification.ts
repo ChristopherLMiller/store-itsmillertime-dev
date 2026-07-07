@@ -28,6 +28,11 @@ export const sendShipmentNotificationWorkflow = createWorkflow(
           order_url: context.order_url,
           tracking: context.tracking,
           store_name: context.store_name,
+          items: context.items,
+          shipping_method_name: context.shipping_method_name,
+          shipping_address_summary: context.shipping_address_summary,
+          currency_code: context.currency_code,
+          order_total: context.order_total,
         },
       },
     ])
