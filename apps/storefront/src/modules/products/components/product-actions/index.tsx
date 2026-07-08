@@ -2,6 +2,11 @@
 
 import { addToCart } from "@lib/data/cart"
 import { useIntersection } from "@lib/hooks/use-in-view"
+import {
+  getFormatsForPaper,
+  getSortedProductOptions,
+  PAPER_OPTION_TITLE,
+} from "@lib/util/product-options"
 import { HttpTypes } from "@medusajs/types"
 import { Button } from "@modules/common/components/ui"
 import Divider from "@modules/common/components/divider"
@@ -40,6 +45,23 @@ export default function ProductActions({
   const [isAdding, setIsAdding] = useState(false)
   const countryCode = useParams().countryCode as string
 
+  const sortedOptions = useMemo(
+    () => getSortedProductOptions(product.options),
+    [product.options]
+  )
+
+  const paperOption = useMemo(
+    () => sortedOptions.find((option) => option.title === PAPER_OPTION_TITLE),
+    [sortedOptions]
+  )
+
+  const selectedPaper = paperOption ? options[paperOption.id] : undefined
+
+  const formatValuesByPaper = useMemo(
+    () => getFormatsForPaper(product),
+    [product]
+  )
+
   // If there is only 1 variant, preselect the options
   useEffect(() => {
     if (product.variants?.length === 1) {
@@ -59,12 +81,44 @@ export default function ProductActions({
     })
   }, [product.variants, options])
 
-  // update the options when a variant is selected
   const setOptionValue = (optionId: string, value: string) => {
-    setOptions((prev) => ({
-      ...prev,
-      [optionId]: value,
-    }))
+    setOptions((prev) => {
+      const next = {
+        ...prev,
+        [optionId]: value,
+      }
+
+      if (paperOption?.id !== optionId || !paperOption) {
+        return next
+      }
+
+      const allowedFormats = formatValuesByPaper.get(value)
+      if (!allowedFormats?.size) {
+        return next
+      }
+
+      const formatOption = sortedOptions.find(
+        (option) => option.title !== PAPER_OPTION_TITLE
+      )
+
+      if (!formatOption) {
+        return next
+      }
+
+      const currentFormat = next[formatOption.id]
+      if (currentFormat && allowedFormats.has(currentFormat)) {
+        return next
+      }
+
+      const firstFormat = formatOption.values?.find((entry) =>
+        allowedFormats.has(entry.value)
+      )?.value
+
+      return {
+        ...next,
+        [formatOption.id]: firstFormat,
+      }
+    })
   }
 
   //check if the selected options produce a valid variant
@@ -141,7 +195,12 @@ export default function ProductActions({
         <div>
           {(product.variants?.length ?? 0) > 1 && (
             <div className="flex flex-col gap-y-4">
-              {(product.options || []).map((option) => {
+              {sortedOptions.map((option) => {
+                const allowedValues =
+                  option.title !== PAPER_OPTION_TITLE && selectedPaper
+                    ? formatValuesByPaper.get(selectedPaper)
+                    : undefined
+
                 return (
                   <div key={option.id}>
                     <OptionSelect
@@ -151,6 +210,7 @@ export default function ProductActions({
                       title={option.title ?? ""}
                       data-testid="product-options"
                       disabled={!!disabled || isAdding}
+                      allowedValues={allowedValues}
                     />
                   </div>
                 )
@@ -192,6 +252,9 @@ export default function ProductActions({
           isAdding={isAdding}
           show={!inView}
           optionsDisabled={!!disabled || isAdding}
+          sortedOptions={sortedOptions}
+          formatValuesByPaper={formatValuesByPaper}
+          selectedPaper={selectedPaper}
         />
       </div>
     </>

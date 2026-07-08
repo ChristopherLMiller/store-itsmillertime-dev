@@ -8,6 +8,7 @@ type OptionSelectProps = {
   updateOption: (title: string, value: string) => void
   title: string
   disabled: boolean
+  allowedValues?: Set<string>
   "data-testid"?: string
 }
 
@@ -18,8 +19,11 @@ const OptionSelect: React.FC<OptionSelectProps> = ({
   title,
   "data-testid": dataTestId,
   disabled,
+  allowedValues,
 }) => {
-  const filteredOptions = (option.values ?? []).map((v) => v.value)
+  const filteredOptions = (option.values ?? [])
+    .map((v) => v.value)
+    .filter((value) => !allowedValues || allowedValues.has(value))
 
   return (
     <div className="flex flex-col gap-y-3">

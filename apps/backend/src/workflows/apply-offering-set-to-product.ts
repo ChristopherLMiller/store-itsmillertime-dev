@@ -27,6 +27,8 @@ export type ApplyOfferingSetToProductInput = {
   product_id: string
   offering_set_id: string
   sells_digital?: boolean
+  digital_price?: number
+  digital_price_currency?: string
 }
 
 export const applyOfferingSetToProductWorkflow = createWorkflow(
@@ -38,7 +40,7 @@ export const applyOfferingSetToProductWorkflow = createWorkflow(
 
     ensurePrintOptionsStep(plan)
 
-    const variantsInput = transform({ plan }, ({ plan }) => ({
+    const variantsInput = transform({ plan, input }, ({ plan, input }) => ({
       product_variants: [
         ...plan.variants_to_create.map((v) => ({
           product_id: plan.product_id,
@@ -71,6 +73,10 @@ export const applyOfferingSetToProductWorkflow = createWorkflow(
                   [FORMAT_OPTION_TITLE]: DIGITAL_FORMAT_VALUE,
                 },
                 manage_inventory: false,
+                prices: buildVariantPrices(
+                  input.digital_price,
+                  input.digital_price_currency
+                ),
                 metadata: {
                   fulfillment_type: "digital",
                 },

@@ -45,6 +45,8 @@ export async function POST(
       product_id: id,
       offering_set_id: req.validatedBody.offering_set_id,
       sells_digital: req.validatedBody.sells_digital,
+      digital_price: req.validatedBody.digital_price,
+      digital_price_currency: req.validatedBody.digital_price_currency,
     },
   })
 

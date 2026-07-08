@@ -7,6 +7,8 @@ import { z } from "@medusajs/framework/zod"
 export const ApplyOfferingSetSchema = z.object({
   offering_set_id: z.string().min(1),
   sells_digital: z.boolean().optional(),
+  digital_price: z.number().positive().optional(),
+  digital_price_currency: z.string().optional(),
 })
 export type ApplyOfferingSetSchema = z.infer<typeof ApplyOfferingSetSchema>
 

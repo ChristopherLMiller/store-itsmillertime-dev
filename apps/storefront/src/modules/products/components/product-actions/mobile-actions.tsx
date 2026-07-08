@@ -21,6 +21,9 @@ type MobileActionsProps = {
   isAdding?: boolean
   show: boolean
   optionsDisabled: boolean
+  sortedOptions: HttpTypes.StoreProductOption[]
+  formatValuesByPaper: Map<string, Set<string>>
+  selectedPaper?: string
 }
 
 const MobileActions: React.FC<MobileActionsProps> = ({
@@ -33,6 +36,9 @@ const MobileActions: React.FC<MobileActionsProps> = ({
   isAdding,
   show,
   optionsDisabled,
+  sortedOptions,
+  formatValuesByPaper,
+  selectedPaper,
 }) => {
   const { state, open, close } = useToggleState()
 
@@ -110,7 +116,7 @@ const MobileActions: React.FC<MobileActionsProps> = ({
                 <div className="flex items-center justify-between w-full">
                   <span>
                     {variant
-                      ? Object.values(options).join(" / ")
+                      ? Object.values(options).join(" / ")
                       : "Select Options"}
                   </span>
                   <ChevronDown />
@@ -174,7 +180,12 @@ const MobileActions: React.FC<MobileActionsProps> = ({
                   <div className="bg-white px-6 py-12">
                     {(product.variants?.length ?? 0) > 1 && (
                       <div className="flex flex-col gap-y-6">
-                        {(product.options || []).map((option) => {
+                        {sortedOptions.map((option) => {
+                          const allowedValues =
+                            option.title !== "Paper" && selectedPaper
+                              ? formatValuesByPaper.get(selectedPaper)
+                              : undefined
+
                           return (
                             <div key={option.id}>
                               <OptionSelect
@@ -183,6 +194,7 @@ const MobileActions: React.FC<MobileActionsProps> = ({
                                 updateOption={updateOptions}
                                 title={option.title ?? ""}
                                 disabled={optionsDisabled}
+                                allowedValues={allowedValues}
                               />
                             </div>
                           )
