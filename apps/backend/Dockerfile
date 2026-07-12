@@ -56,8 +56,8 @@ WORKDIR /app/apps/backend
 
 EXPOSE 9000
 
-#HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
-#  CMD curl -fsS "http://127.0.0.1:${PORT}/health" || exit 1
+HEALTHCHECK --interval=30s --timeout=10s --start-period=120s --retries=3 \
+  CMD curl -fsS "http://127.0.0.1:${PORT}/health" || exit 1
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
 CMD ["./start.sh"]
