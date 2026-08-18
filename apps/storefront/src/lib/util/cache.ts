@@ -15,6 +15,9 @@ export const fetchCache: RequestCache = shouldBypassDataCache
   ? "no-store"
   : "force-cache"
 
+/** Carts, customers, and orders must not be cached — they change per request. */
+export const privateFetchCache: RequestCache = "no-store"
+
 export const fetchRevalidate = shouldBypassDataCache
   ? 0
   : catalogRevalidateSeconds

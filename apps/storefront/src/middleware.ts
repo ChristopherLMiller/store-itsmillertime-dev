@@ -18,7 +18,7 @@ function withCartHandoffCookie(response: NextResponse, cartId: string | null) {
     response.cookies.set("_medusa_cart_id", cartId, {
       maxAge: 60 * 60 * 24 * 7,
       httpOnly: true,
-      sameSite: "strict",
+      sameSite: "lax",
       secure: process.env.NODE_ENV === "production",
       path: "/",
     })
@@ -146,12 +146,13 @@ export async function middleware(request: NextRequest) {
   const cartId = incomingCartId(request)
 
   if (urlHasCountry) {
-    // Adopt a handed-off cart on a redirect so this request's Server Components
-    // see `_medusa_cart_id` (Set-Cookie is not visible until the next request).
     if (cartId) {
-      const dest = request.nextUrl.clone()
-      dest.searchParams.delete("cart_id")
-      return withCartHandoffCookie(NextResponse.redirect(dest, 307), cartId)
+      const requestHeaders = new Headers(request.headers)
+      requestHeaders.set("x-medusa-cart-id", cartId)
+      const response = NextResponse.next({
+        request: { headers: requestHeaders },
+      })
+      return withCartHandoffCookie(response, cartId)
     }
 
     if (!cacheIdCookie) {
@@ -164,12 +165,12 @@ export async function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // if the url doesn't have the country, redirect to it
+  // Keep cart_id on the country redirect so the follow-up request can
+  // still resolve the gallery cart if Set-Cookie has not been applied yet.
   const dest = request.nextUrl.clone()
   dest.pathname = `/${country}${
     request.nextUrl.pathname === "/" ? "" : request.nextUrl.pathname
   }`
-  dest.searchParams.delete("cart_id")
 
   return withCartHandoffCookie(NextResponse.redirect(dest, 307), cartId)
 }
