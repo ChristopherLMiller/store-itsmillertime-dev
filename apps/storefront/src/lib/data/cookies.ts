@@ -1,6 +1,8 @@
 import "server-only"
 import { fetchRevalidate } from "@lib/util/cache"
-import { cookies as nextCookies } from "next/headers"
+import { cookies as nextCookies, headers as nextHeaders } from "next/headers"
+
+const CART_ID_PATTERN = /^cart_[A-Za-z0-9]+$/
 
 export const getAuthHeaders = async (): Promise<
   { authorization: string } | Record<string, never>
@@ -115,6 +117,15 @@ export const removePendingCustomer = async () => {
 }
 
 export const getCartId = async () => {
+  try {
+    const handoffId = (await nextHeaders()).get("x-medusa-cart-id")
+    if (handoffId && CART_ID_PATTERN.test(handoffId)) {
+      return handoffId
+    }
+  } catch {
+    // headers() is unavailable in some server contexts
+  }
+
   const cookies = await nextCookies()
   return cookies.get("_medusa_cart_id")?.value
 }
@@ -124,7 +135,7 @@ export const setCartId = async (cartId: string) => {
   cookies.set("_medusa_cart_id", cartId, {
     maxAge: 60 * 60 * 24 * 7,
     httpOnly: true,
-    sameSite: "strict",
+    sameSite: "lax",
     secure: process.env.NODE_ENV === "production",
   })
 }

@@ -1,7 +1,7 @@
 "use server"
 
 import { sdk } from "@lib/config"
-import { fetchCache } from "@lib/util/cache"
+import { privateFetchCache } from "@lib/util/cache"
 import medusaError from "@lib/util/medusa-error"
 import { HttpTypes } from "@medusajs/types"
 import { revalidateTag } from "next/cache"
@@ -23,7 +23,9 @@ import { getLocale } from "./locale-actions"
  * @returns The cart object if found, or null if not found.
  */
 export async function retrieveCart(cartId?: string, fields?: string) {
-  const id = cartId || (await getCartId())
+  const requestedId =
+    cartId && /^cart_[A-Za-z0-9]+$/.test(cartId) ? cartId : undefined
+  const id = requestedId || (await getCartId())
   fields ??=
     "*items, *region, *items.product, *items.variant, +items.variant.metadata, *items.thumbnail, *items.metadata, +items.total, *promotions, +shipping_methods.name, *payment_collection, *payment_collection.payment_sessions"
 
@@ -47,7 +49,7 @@ export async function retrieveCart(cartId?: string, fields?: string) {
       },
       headers,
       next,
-      cache: fetchCache,
+      cache: privateFetchCache,
     })
     .then(({ cart }: { cart: HttpTypes.StoreCart }) => cart)
     .catch(() => null)
@@ -475,7 +477,7 @@ export async function listCartOptions() {
       query: { cart_id: cartId },
       next,
       headers,
-      cache: fetchCache,
+      cache: privateFetchCache,
     })
     .catch(() => ({ shipping_options: [] }))
 }
