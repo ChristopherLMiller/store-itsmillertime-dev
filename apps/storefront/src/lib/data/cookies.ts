@@ -36,22 +36,22 @@ export const getCacheTag = async (tag: string): Promise<string> => {
 
 export const getCacheOptions = async (
   tag: string
-): Promise<{ tags: string[] } | Record<string, never>> => {
+): Promise<{ tags?: string[]; revalidate?: number }> => {
   if (typeof window !== "undefined") {
     return {}
   }
-
-  const cacheTag = await getCacheTag(tag)
 
   if (fetchRevalidate === 0) {
     return { revalidate: 0 }
   }
 
-  if (!cacheTag) {
-    return {}
-  }
+  const cacheTag = await getCacheTag(tag)
+  const tags = cacheTag ? [tag, cacheTag] : [tag]
 
-  return { tags: [`${cacheTag}`] }
+  return {
+    tags,
+    revalidate: fetchRevalidate,
+  }
 }
 
 export const setAuthToken = async (token: string) => {

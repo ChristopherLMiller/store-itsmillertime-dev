@@ -10,13 +10,19 @@ type Props = {
   searchParams: Promise<{ v_id?: string }>
 }
 
+export const dynamicParams = true
+
 export async function generateStaticParams() {
   try {
-    const countryCodes = await listRegions().then((regions) =>
-      regions?.map((r) => r.countries?.map((c) => c.iso_2)).flat()
+    const countryCodes = await listRegions().then(
+      (regions) =>
+        regions
+          ?.map((r) => r.countries?.map((c) => c.iso_2))
+          .flat()
+          .filter(Boolean) as string[]
     )
 
-    if (!countryCodes) {
+    if (!countryCodes?.length) {
       return []
     }
 
@@ -53,20 +59,24 @@ export async function generateStaticParams() {
 }
 
 function getImagesForVariant(
-  product: HttpTypes.StoreProduct,
+  product?: HttpTypes.StoreProduct | null,
   selectedVariantId?: string
 ) {
+  if (!product) {
+    return []
+  }
+
   if (!selectedVariantId || !product.variants) {
-    return product.images
+    return product.images ?? []
   }
 
-  const variant = product.variants!.find((v) => v.id === selectedVariantId)
+  const variant = product.variants.find((v) => v.id === selectedVariantId)
   if (!variant || !variant.images?.length) {
-    return product.images
+    return product.images ?? []
   }
 
-  const imageIdsMap = new Map(variant.images!.map((i) => [i.id, true]))
-  return product.images?.filter((i) => imageIdsMap.has(i.id)) ?? null
+  const imageIdsMap = new Map(variant.images.map((i) => [i.id, true]))
+  return product.images?.filter((i) => imageIdsMap.has(i.id)) ?? []
 }
 
 export async function generateMetadata(props: Props): Promise<Metadata> {
@@ -81,7 +91,15 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   const product = await listProducts({
     countryCode: params.countryCode,
     queryParams: { handle },
-  }).then(({ response }) => response.products[0])
+  })
+    .then(({ response }) => response.products[0])
+    .catch((error) => {
+      console.error(
+        `Failed to load product metadata for ${handle}:`,
+        error instanceof Error ? error.message : error
+      )
+      return null
+    })
 
   if (!product) {
     notFound()
@@ -112,20 +130,28 @@ export default async function ProductPage(props: Props) {
   const pricedProduct = await listProducts({
     countryCode: params.countryCode,
     queryParams: { handle: params.handle },
-  }).then(({ response }) => response.products[0])
-
-  const images = getImagesForVariant(pricedProduct, selectedVariantId)
+  })
+    .then(({ response }) => response.products[0])
+    .catch((error) => {
+      console.error(
+        `Failed to load product ${params.handle}:`,
+        error instanceof Error ? error.message : error
+      )
+      return null
+    })
 
   if (!pricedProduct) {
     notFound()
   }
+
+  const images = getImagesForVariant(pricedProduct, selectedVariantId)
 
   return (
     <ProductTemplate
       product={pricedProduct}
       region={region}
       countryCode={params.countryCode}
-      images={images ?? []}
+      images={images}
     />
   )
 }

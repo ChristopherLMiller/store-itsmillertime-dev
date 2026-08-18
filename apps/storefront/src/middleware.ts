@@ -5,6 +5,26 @@ import { NextRequest, NextResponse } from "next/server"
 const BACKEND_URL = process.env.NEXT_PUBLIC_MEDUSA_BACKEND_URL
 const PUBLISHABLE_API_KEY = process.env.NEXT_PUBLIC_MEDUSA_PUBLISHABLE_KEY
 const DEFAULT_REGION = process.env.NEXT_PUBLIC_DEFAULT_REGION || "us"
+const CART_ID_PATTERN = /^cart_[A-Za-z0-9]+$/
+
+/** Cart id the gallery site (or another storefront) is handing off via `?cart_id=`. */
+function incomingCartId(request: NextRequest): string | null {
+  const cartId = request.nextUrl.searchParams.get("cart_id")
+  return cartId && CART_ID_PATTERN.test(cartId) ? cartId : null
+}
+
+function withCartHandoffCookie(response: NextResponse, cartId: string | null) {
+  if (cartId) {
+    response.cookies.set("_medusa_cart_id", cartId, {
+      maxAge: 60 * 60 * 24 * 7,
+      httpOnly: true,
+      sameSite: "strict",
+      secure: process.env.NODE_ENV === "production",
+      path: "/",
+    })
+  }
+  return response
+}
 
 const regionMapCache = {
   regionMap: new Map<string, HttpTypes.StoreRegion>(),
@@ -123,8 +143,17 @@ export async function middleware(request: NextRequest) {
   const country = countryCode || DEFAULT_REGION
   const firstPathSegment = request.nextUrl.pathname.split("/")[1]?.toLowerCase()
   const urlHasCountry = firstPathSegment === country.toLowerCase()
+  const cartId = incomingCartId(request)
 
   if (urlHasCountry) {
+    // Adopt a handed-off cart on a redirect so this request's Server Components
+    // see `_medusa_cart_id` (Set-Cookie is not visible until the next request).
+    if (cartId) {
+      const dest = request.nextUrl.clone()
+      dest.searchParams.delete("cart_id")
+      return withCartHandoffCookie(NextResponse.redirect(dest, 307), cartId)
+    }
+
     if (!cacheIdCookie) {
       const response = NextResponse.next()
       response.cookies.set("_medusa_cache_id", cacheId, {
@@ -136,12 +165,13 @@ export async function middleware(request: NextRequest) {
   }
 
   // if the url doesn't have the country, redirect to it
-  const redirectPath =
+  const dest = request.nextUrl.clone()
+  dest.pathname = `/${country}${
     request.nextUrl.pathname === "/" ? "" : request.nextUrl.pathname
-  const queryString = request.nextUrl.search || ""
-  const redirectUrl = `${request.nextUrl.origin}/${country}${redirectPath}${queryString}`
+  }`
+  dest.searchParams.delete("cart_id")
 
-  return NextResponse.redirect(redirectUrl, 307)
+  return withCartHandoffCookie(NextResponse.redirect(dest, 307), cartId)
 }
 
 export const config = {
