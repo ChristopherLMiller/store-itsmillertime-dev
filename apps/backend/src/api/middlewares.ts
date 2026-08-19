@@ -1,4 +1,5 @@
 import { defineMiddlewares } from "@medusajs/framework/http"
+import { authentikAuthMiddlewares } from "./auth/authentik/middlewares"
 import { printOfferingsMiddlewares } from "./admin/print-offerings/middlewares"
 import { offeringSetsMiddlewares } from "./admin/offering-sets/middlewares"
 import { productOfferingSetMiddlewares } from "./admin/products/[id]/offering-set/middlewares"
@@ -23,6 +24,7 @@ export default defineMiddlewares({
         sizeLimit: UPLOAD_SIZE_LIMIT,
       },
     },
+    ...authentikAuthMiddlewares,
     ...printOfferingsMiddlewares,
     ...offeringSetsMiddlewares,
     ...productOfferingSetMiddlewares,

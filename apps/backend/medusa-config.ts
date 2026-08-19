@@ -1,4 +1,9 @@
-import { loadEnv, defineConfig } from '@medusajs/framework/utils';
+import {
+  loadEnv,
+  defineConfig,
+  Modules,
+  ContainerRegistrationKeys,
+} from '@medusajs/framework/utils';
 import {
   resolveEnvironmentApiKey,
   resolveStripeWebhookSecret,
@@ -70,6 +75,43 @@ const modules: Record<string, unknown>[] = [
   },
 ];
 
+const authentikIssuer = process.env.AUTHENTIK_ISSUER
+const authentikClientId = process.env.AUTHENTIK_CLIENT_ID
+const authentikClientSecret = process.env.AUTHENTIK_CLIENT_SECRET
+const authentikConfigured = Boolean(
+  authentikIssuer && authentikClientId && authentikClientSecret
+)
+
+const authProviders: Record<string, unknown>[] = [
+  {
+    resolve: '@medusajs/medusa/auth-emailpass',
+    id: 'emailpass',
+  },
+]
+
+if (authentikConfigured) {
+  authProviders.push({
+    resolve: './src/modules/auth-authentik',
+    id: 'authentik',
+    options: {
+      issuer: authentikIssuer,
+      clientId: authentikClientId,
+      clientSecret: authentikClientSecret,
+      redirectUri:
+        process.env.AUTHENTIK_REDIRECT_URI ||
+        `${process.env.MEDUSA_BACKEND_URL || 'http://localhost:9000'}/app/login`,
+    },
+  })
+}
+
+modules.push({
+  resolve: '@medusajs/medusa/auth',
+  dependencies: [Modules.CACHE, ContainerRegistrationKeys.LOGGER],
+  options: {
+    providers: authProviders,
+  },
+})
+
 if (useR2) {
   modules.push({
     resolve: '@medusajs/medusa/file',
@@ -116,6 +158,12 @@ module.exports = defineConfig({
       authCors: process.env.AUTH_CORS!,
       jwtSecret: process.env.JWT_SECRET,
       cookieSecret: process.env.COOKIE_SECRET,
+      authMethodsPerActor: {
+        user: authentikConfigured
+          ? ['emailpass', 'authentik']
+          : ['emailpass'],
+        customer: ['emailpass'],
+      },
     },
   },
   modules,
