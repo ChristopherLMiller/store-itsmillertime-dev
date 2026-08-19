@@ -1,30 +1,24 @@
 import { defineWidgetConfig } from "@medusajs/admin-sdk"
+import { Spinner } from "@medusajs/icons"
 import { Button, toast } from "@medusajs/ui"
-import { useMutation, useQuery } from "@tanstack/react-query"
-import { useEffect, useRef } from "react"
-import { useNavigate, useSearchParams } from "react-router-dom"
+import { useQuery } from "@tanstack/react-query"
+import { useCallback, useEffect, useRef, useState } from "react"
+import { useNavigate } from "react-router-dom"
 import { sdk } from "../lib/client"
+import {
+  authentikErrorMessage,
+  completeAuthentikLogin,
+  getAuthentikCallbackQuery,
+} from "../lib/complete-authentik-login"
 
 const PROVIDER = "authentik"
 
-type JwtPayload = {
-  actor_id?: string
-}
-
-function decodeJwtPayload(token: string): JwtPayload {
-  const payload = token.split(".")[1]
-  if (!payload) {
-    return {}
-  }
-
-  const padded = payload.replace(/-/g, "+").replace(/_/g, "/")
-  return JSON.parse(atob(padded)) as JwtPayload
-}
+let activeCallbackKey: string | null = null
 
 const AuthentikLogin = () => {
-  const [searchParams] = useSearchParams()
   const navigate = useNavigate()
   const handledCallback = useRef(false)
+  const [isCallbackPending, setIsCallbackPending] = useState(false)
 
   const { data: status } = useQuery({
     queryKey: ["authentik-status"],
@@ -32,63 +26,56 @@ const AuthentikLogin = () => {
       sdk.client.fetch<{ enabled: boolean }>("/auth/authentik/status"),
   })
 
-  const { mutateAsync: completeCallback, isPending } = useMutation({
-    mutationFn: async () => {
-      const result = await sdk.auth.callback(
-        "user",
-        PROVIDER,
-        Object.fromEntries(searchParams)
-      )
-
-      const token = typeof result === "string" ? result : result.token
-      if (!token) {
-        throw new Error("Authentik callback did not return a token")
-      }
-
-      const decoded = decodeJwtPayload(token)
-      const userExists = Boolean(decoded.actor_id)
-
-      if (!userExists) {
-        await sdk.client.fetch("/auth/authentik/register-user", {
-          method: "POST",
-          body: {},
-        })
-        await sdk.auth.refresh()
-      }
-
+  const handleCallback = useCallback(async () => {
+    setIsCallbackPending(true)
+    try {
+      await completeAuthentikLogin(getAuthentikCallbackQuery())
       navigate("/orders", { replace: true })
-    },
-    onError: (error) => {
+    } catch (error) {
       console.error("Authentik authentication error:", error)
-      toast.error("Authentik sign-in failed")
-    },
-  })
+      toast.error(authentikErrorMessage(error))
+      navigate("/login", { replace: true })
+    }
+    setIsCallbackPending(false)
+  }, [navigate])
 
   useEffect(() => {
-    if (searchParams.get("error")) {
-      toast.error(searchParams.get("error_description") || "Access denied")
-      return
-    }
-
-    if (!searchParams.get("code") || handledCallback.current) {
+    const query = getAuthentikCallbackQuery()
+    const callbackKey = query.code || query.error
+    if (
+      !callbackKey ||
+      handledCallback.current ||
+      activeCallbackKey === callbackKey
+    ) {
       return
     }
 
     handledCallback.current = true
-    void completeCallback()
-  }, [searchParams, completeCallback])
+    activeCallbackKey = callbackKey
+    void handleCallback()
+  }, [handleCallback])
 
   const signIn = async () => {
-    const result = await sdk.auth.login("user", PROVIDER, {
-      callback_url: `${window.location.origin}${window.location.pathname}`,
-    })
+    try {
+      const result = await sdk.auth.login("user", PROVIDER, {})
 
-    if (typeof result === "object" && result && "location" in result) {
-      window.location.href = result.location
-      return
+      if (typeof result === "object" && result && "location" in result) {
+        window.location.href = result.location
+        return
+      }
+
+      toast.error("Authentik sign-in failed")
+    } catch (error) {
+      toast.error(authentikErrorMessage(error))
     }
+  }
 
-    toast.error("Authentik sign-in failed")
+  if (isCallbackPending) {
+    return (
+      <div className="bg-ui-bg-subtle fixed inset-0 z-50 flex items-center justify-center">
+        <Spinner className="text-ui-fg-subtle animate-spin" />
+      </div>
+    )
   }
 
   if (!status?.enabled) {
@@ -101,7 +88,6 @@ const AuthentikLogin = () => {
       <Button
         variant="secondary"
         className="w-full"
-        isLoading={isPending}
         onClick={() => void signIn()}
       >
         Sign in with Authentik
