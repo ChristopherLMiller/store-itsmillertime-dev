@@ -9,6 +9,10 @@ import {
   MedusaError,
 } from "@medusajs/framework/utils"
 import { createHash, randomBytes } from "crypto"
+import {
+  signAuthentikOAuthState,
+  verifyAuthentikOAuthState,
+} from "./oauth-state"
 
 type InjectedDependencies = {
   logger: Logger
@@ -35,6 +39,18 @@ function toBase64Url(buffer: Buffer): string {
     .replace(/\+/g, "-")
     .replace(/\//g, "_")
     .replace(/=+$/, "")
+}
+
+function firstQueryValue(value: unknown): string | undefined {
+  if (typeof value === "string" && value) {
+    return value
+  }
+
+  if (Array.isArray(value) && typeof value[0] === "string" && value[0]) {
+    return value[0]
+  }
+
+  return undefined
 }
 
 class AuthentikAuthProviderService extends AbstractAuthModuleProvider {
@@ -64,23 +80,21 @@ class AuthentikAuthProviderService extends AbstractAuthModuleProvider {
   }
 
   async authenticate(
-    data: AuthenticationInput,
-    authIdentityProviderService: AuthIdentityProviderService
+    _data: AuthenticationInput,
+    _authIdentityProviderService: AuthIdentityProviderService
   ): Promise<AuthenticationResponse> {
-    const callbackUrl =
-      (data.body?.callback_url as string | undefined) ||
-      this.options_.redirectUri
-
-    const state = randomBytes(32).toString("hex")
+    const callbackUrl = this.options_.redirectUri
     const codeVerifier = toBase64Url(randomBytes(32))
     const codeChallenge = toBase64Url(
       createHash("sha256").update(codeVerifier).digest()
     )
-
-    await authIdentityProviderService.setState(state, {
-      callback_url: callbackUrl,
-      code_verifier: codeVerifier,
-    })
+    const state = signAuthentikOAuthState(
+      {
+        callback_url: callbackUrl,
+        code_verifier: codeVerifier,
+      },
+      this.options_.clientSecret
+    )
 
     const endpoints = await this.getEndpoints()
     const params = new URLSearchParams({
@@ -110,26 +124,48 @@ class AuthentikAuthProviderService extends AbstractAuthModuleProvider {
     data: AuthenticationInput,
     authIdentityProviderService: AuthIdentityProviderService
   ): Promise<AuthenticationResponse> {
-    const code = data.query?.code as string | undefined
-    const stateKey = data.query?.state as string | undefined
+    const queryError = firstQueryValue(data.query?.error)
+    if (queryError) {
+      const description = firstQueryValue(data.query?.error_description)
+      return {
+        success: false,
+        error: description || queryError,
+      }
+    }
+
+    const code = firstQueryValue(data.query?.code)
+    const stateKey = firstQueryValue(data.query?.state)
 
     if (!code || !stateKey) {
+      this.logger_.error("Authentik callback is missing code or state")
       return {
         success: false,
         error: "Authorization code or state is missing",
       }
     }
 
-    const state = await authIdentityProviderService.getState(stateKey)
-    if (!state) {
+    const signedState = verifyAuthentikOAuthState(
+      stateKey,
+      this.options_.clientSecret
+    )
+    const cachedState = signedState
+      ? null
+      : await authIdentityProviderService.getState(stateKey).catch(() => null)
+    const callbackUrl =
+      signedState?.callback_url || (cachedState?.callback_url as string | undefined)
+    const codeVerifier =
+      signedState?.code_verifier ||
+      (cachedState?.code_verifier as string | undefined)
+
+    if (!callbackUrl || !codeVerifier) {
+      this.logger_.error(
+        "Authentik callback state is invalid or expired. Confirm AUTHENTIK_REDIRECT_URI matches the Authentik app redirect URI."
+      )
       return {
         success: false,
         error: "No state provided, or session expired",
       }
     }
-
-    const callbackUrl = state.callback_url as string
-    const codeVerifier = state.code_verifier as string
 
     try {
       const endpoints = await this.getEndpoints()
@@ -153,6 +189,9 @@ class AuthentikAuthProviderService extends AbstractAuthModuleProvider {
 
       if (!tokenResponse.ok) {
         const errorText = await tokenResponse.text()
+        this.logger_.error(
+          `Authentik token exchange failed (${tokenResponse.status}): ${errorText}`
+        )
         throw new MedusaError(
           MedusaError.Types.INVALID_DATA,
           `Failed to exchange code for tokens: ${errorText}`
@@ -181,6 +220,9 @@ class AuthentikAuthProviderService extends AbstractAuthModuleProvider {
 
       if (!userInfoResponse.ok) {
         const errorText = await userInfoResponse.text()
+        this.logger_.error(
+          `Authentik userinfo failed (${userInfoResponse.status}): ${errorText}`
+        )
         throw new MedusaError(
           MedusaError.Types.INVALID_DATA,
           `Failed to get Authentik user info: ${errorText}`

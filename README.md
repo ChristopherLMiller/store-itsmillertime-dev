@@ -168,7 +168,7 @@ Backend env (`apps/backend/.env`):
 | `AUTHENTIK_ISSUER` | OpenID issuer URL from Authentik (Admin SSO) |
 | `AUTHENTIK_CLIENT_ID` | Authentik OAuth2 client ID |
 | `AUTHENTIK_CLIENT_SECRET` | Authentik OAuth2 client secret |
-| `AUTHENTIK_REDIRECT_URI` | Optional. Defaults to `{MEDUSA_BACKEND_URL}/app/login` |
+| `AUTHENTIK_REDIRECT_URI` | Optional. Must match the Authentik app redirect URI exactly. Defaults to `{MEDUSA_BACKEND_URL}/app/login` |
 
 After setting keys, restart the backend and enable **Stripe** under **Settings → Regions → [your region] → Payment Providers** in the Medusa admin.
 
