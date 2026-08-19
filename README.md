@@ -165,6 +165,10 @@ Backend env (`apps/backend/.env`):
 | `STRIPE_LIVE_API_KEY` | Stripe live secret key (`sk_live_...`) |
 | `STRIPE_SANDBOX_WEBHOOK_SECRET` | Stripe test webhook secret (optional locally) |
 | `STRIPE_LIVE_WEBHOOK_SECRET` | Stripe live webhook secret |
+| `AUTHENTIK_ISSUER` | OpenID issuer URL from Authentik (Admin SSO) |
+| `AUTHENTIK_CLIENT_ID` | Authentik OAuth2 client ID |
+| `AUTHENTIK_CLIENT_SECRET` | Authentik OAuth2 client secret |
+| `AUTHENTIK_REDIRECT_URI` | Optional. Defaults to `{MEDUSA_BACKEND_URL}/app/login` |
 
 After setting keys, restart the backend and enable **Stripe** under **Settings → Regions → [your region] → Payment Providers** in the Medusa admin.
 
