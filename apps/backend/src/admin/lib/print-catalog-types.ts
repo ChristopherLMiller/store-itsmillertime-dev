@@ -76,12 +76,21 @@ export type UpdatePrintOfferingResponse = {
   variants_updated: number
 }
 
+export type RefetchPrintOfferingsResponse = {
+  checked: number
+  updated: number
+  skipped: number
+  failed: { sku: string; reason: string }[]
+  variants_updated: number
+}
+
 export type ProdigiProductLookupResponse =
   | {
       kind: "product"
       product: ProdigiFetchedSpecs
       attributes: Record<string, string[]>
       unit_cost: ProdigiUnitCost | null
+      raw_prodigi_data?: Record<string, unknown>
     }
   | {
       kind: "suggestions"

@@ -62,18 +62,54 @@ function humanizeAttributeKey(key: string): string {
     .replace(/^./, (char) => char.toUpperCase())
 }
 
+const WEIGHT_TEXT_PATTERN =
+  /(\d+(?:\.\d+)?)\s*(?:gsm|g\/m[²2]|g\s*m[-−]?2)/i
+
 export function parseWeightFromText(value: string | null): number | null {
   if (!value) {
     return null
   }
 
-  const match = value.match(/(\d+(?:\.\d+)?)\s*gsm/i) ?? value.match(/^(\d+(?:\.\d+)?)$/)
+  const match =
+    value.match(WEIGHT_TEXT_PATTERN) ?? value.match(/^(\d+(?:\.\d+)?)$/)
   if (!match) {
     return null
   }
 
   const parsed = Number.parseFloat(match[1])
   return Number.isFinite(parsed) ? Math.round(parsed) : null
+}
+
+/**
+ * Attributes Prodigi requires on a quote. C-type SKUs reject quotes without
+ * `finish`; canvas rejects quotes without `wrap`.
+ */
+export function quoteAttributesFromProduct(input: {
+  attributes?: Record<string, string[]> | null
+  finish_options?: string[]
+}): Record<string, string> | undefined {
+  const result: Record<string, string> = {}
+
+  for (const [rawKey, values] of Object.entries(input.attributes ?? {})) {
+    const cleaned = uniqueTrimmed(values)
+    if (!cleaned.length) {
+      continue
+    }
+
+    const key = normalizeAttributeKey(rawKey)
+    if (FINISH_KEYS.has(key) || cleaned.length > 1) {
+      result[rawKey] = cleaned[0]
+    }
+  }
+
+  if (!Object.keys(result).some((key) => FINISH_KEYS.has(normalizeAttributeKey(key)))) {
+    const finish = input.finish_options?.[0]?.trim()
+    if (finish) {
+      result.finish = finish
+    }
+  }
+
+  return Object.keys(result).length ? result : undefined
 }
 
 function uniqueTrimmed(values: string[]): string[] {

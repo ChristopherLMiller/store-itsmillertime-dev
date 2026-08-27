@@ -43,13 +43,14 @@ export function formatDisplaySize(
 }
 
 export function parseWeightGsm(description: string): number | null {
-  const match = description.match(/(\d+)\s*gsm/i)
+  const match = description.match(/(\d+)\s*(?:gsm|g\/m[²2])/i)
   return match ? Number.parseInt(match[1], 10) : null
 }
 
 function inferPaperTypeFromSku(sku: string): string | null {
   const upper = sku.toUpperCase()
 
+  if (upper.includes("-PHO-")) return "C-type Print"
   if (upper.includes("-PAP-")) return "Photographic Art Print"
   if (upper.includes("-FAP-")) return "Fine Art Print"
   if (upper.includes("-CAN-")) return "Canvas Print"
@@ -99,7 +100,6 @@ export function buildSuggestedLabel(input: {
   height?: number | null
   units?: string | null
   size_label?: string | null
-  paper_type: string | null
   weight_gsm?: number | null
 }): string {
   const size =
@@ -111,7 +111,9 @@ export function buildSuggestedLabel(input: {
     )
   const weight = input.weight_gsm ? `${input.weight_gsm}gsm` : null
 
-  const parts = [size, input.paper_type, weight].filter(Boolean)
+  // Paper type (LPP, HPR, Fine Art Print, …) belongs on the offering set, not
+  // the Format picker label.
+  const parts = [size, weight].filter(Boolean)
 
   if (parts.length) {
     return parts.join(" · ")
@@ -130,7 +132,6 @@ export function parseProdigiProductSpecs(
       width: input.width,
       height: input.height,
       units: input.units,
-      paper_type,
       weight_gsm,
     }) || input.description
 

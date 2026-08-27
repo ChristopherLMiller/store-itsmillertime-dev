@@ -3,6 +3,7 @@ import { resolveProdigiConfig } from "./config"
 import {
   collectFinishOptionsFromVariants,
   parseProdigiAttributes,
+  quoteAttributesFromProduct,
 } from "./parse-prodigi-attributes"
 import { parseProdigiPrintAreas } from "./parse-prodigi-print-areas"
 import {
@@ -153,7 +154,13 @@ class ProdigiModuleService {
     const exact = await this.tryGetProductDetails(trimmed)
 
     if (exact) {
-      const unit_cost = await this.getUnitCost(trimmed)
+      const unit_cost = await this.getUnitCost(
+        trimmed,
+        quoteAttributesFromProduct({
+          attributes: exact.raw.attributes,
+          finish_options: exact.finish_options,
+        })
+      )
 
       return {
         kind: "product",
@@ -244,7 +251,6 @@ class ProdigiModuleService {
     const suggested_label =
       buildSuggestedLabel({
         size_label: sizeLabel,
-        paper_type,
         weight_gsm,
       }) || parsed.suggested_label
 
@@ -305,8 +311,13 @@ class ProdigiModuleService {
     return null
   }
 
-  async getUnitCost(sku: string): Promise<ProdigiUnitCost | null> {
+  async getUnitCost(
+    sku: string,
+    attributes?: Record<string, string>
+  ): Promise<ProdigiUnitCost | null> {
     const quoteConfig = resolveProdigiQuoteConfig()
+    const quoteAttributes =
+      attributes && Object.keys(attributes).length ? attributes : undefined
 
     try {
       const response = (await this.createQuote({
@@ -317,6 +328,7 @@ class ProdigiModuleService {
           {
             sku,
             copies: 1,
+            ...(quoteAttributes ? { attributes: quoteAttributes } : {}),
             assets: [{ printArea: "default" }],
           },
         ],
@@ -340,7 +352,13 @@ class ProdigiModuleService {
         amount,
         currency: item.unitCost.currency || quoteConfig.currencyCode,
       }
-    } catch {
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error)
+      console.error(
+        `[prodigi] quote failed for ${sku}${
+          quoteAttributes ? ` ${JSON.stringify(quoteAttributes)}` : ""
+        }: ${message}`
+      )
       return null
     }
   }

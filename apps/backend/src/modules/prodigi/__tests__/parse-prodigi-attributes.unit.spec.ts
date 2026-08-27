@@ -1,6 +1,8 @@
 import {
   parseProdigiAttributes,
   collectFinishOptionsFromVariants,
+  quoteAttributesFromProduct,
+  parseWeightFromText,
 } from "../parse-prodigi-attributes"
 
 describe("parseProdigiAttributes", () => {
@@ -42,6 +44,50 @@ describe("parseProdigiAttributes", () => {
       Wrap: ["Black", "ImageWrap", "White"],
     })
     expect(specs.finish_options).toEqual([])
+  })
+})
+
+describe("quoteAttributesFromProduct", () => {
+  it("sends the first finish so C-type quotes are accepted", () => {
+    expect(
+      quoteAttributesFromProduct({
+        attributes: { finish: ["Gloss", "Lustre", "Metallic"] },
+      })
+    ).toEqual({ finish: "Gloss" })
+  })
+
+  it("sends wrap when canvas has a choice of wraps", () => {
+    expect(
+      quoteAttributesFromProduct({
+        attributes: { wrap: ["Black", "ImageWrap", "White"] },
+      })
+    ).toEqual({ wrap: "Black" })
+  })
+
+  it("falls back to finish_options when attributes omit finish", () => {
+    expect(
+      quoteAttributesFromProduct({
+        attributes: {},
+        finish_options: ["Lustre", "Gloss"],
+      })
+    ).toEqual({ finish: "Lustre" })
+  })
+
+  it("omits attributes for SKUs that do not need them", () => {
+    expect(
+      quoteAttributesFromProduct({
+        attributes: { size: ["8x10"] },
+      })
+    ).toBeUndefined()
+  })
+})
+
+describe("parseWeightFromText", () => {
+  it("parses gsm and g/m²", () => {
+    expect(parseWeightFromText("240gsm")).toBe(240)
+    expect(parseWeightFromText("310 g/m²")).toBe(310)
+    expect(parseWeightFromText("200")).toBe(200)
+    expect(parseWeightFromText("230-245μm")).toBeNull()
   })
 })
 

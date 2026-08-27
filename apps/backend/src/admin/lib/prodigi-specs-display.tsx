@@ -29,7 +29,6 @@ export function suggestedLabelFromOffering(
     width: offering.width,
     height: offering.height,
     units: "in",
-    paper_type: offering.paper_type,
     weight_gsm: offering.weight_gsm,
   })
 
@@ -108,7 +107,6 @@ export const ProdigiSpecsCard = ({
     ? suggestedLabelFromFetched(source)
     : buildSuggestedLabel({
         size_label: display.size,
-        paper_type: display.paper_type,
         weight_gsm: display.weight_gsm,
       }) || suggestedLabelFromOffering(source)
 

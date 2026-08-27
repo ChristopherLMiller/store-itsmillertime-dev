@@ -26,6 +26,7 @@ import type {
   ProdigiFetchedSpecs,
   ProdigiPrintAreaSpecs,
   ProdigiProductLookupResponse,
+  RefetchPrintOfferingsResponse,
   UpdatePrintOfferingResponse,
 } from "../../../lib/print-catalog-types"
 
@@ -189,7 +190,11 @@ const AddOfferingModal = ({
           result.attributes,
           result.unit_cost
         )
-        toast.success(`Fetched specs for ${result.product.sku}`)
+        toast.success(
+          result.unit_cost
+            ? `Fetched specs for ${result.product.sku}`
+            : `Fetched specs for ${result.product.sku}, but Prodigi did not return a print cost`
+        )
         return
       }
 
@@ -331,15 +336,28 @@ const AddOfferingModal = ({
               <div className="flex flex-col gap-y-2">
                 <Label>Storefront label *</Label>
                 <Input
-                  placeholder='e.g. 11×14″ · Fine Art Print'
+                  placeholder='e.g. 11×14″'
                   value={form.label}
                   onChange={(e) => setForm({ ...form, label: e.target.value })}
                 />
                 <Text size="small" leading="compact" className="text-ui-fg-subtle">
-                  Short label shown on the storefront Format picker. Parsed
-                  automatically when you fetch from Prodigi.
+                  Size shown on the storefront Format picker. Paper type lives
+                  on the offering set, so it is left off this label.
                 </Text>
               </div>
+
+              {fetched && !unitCost && (
+                <div className="bg-ui-bg-subtle flex flex-col gap-y-2 rounded-md px-4 py-3">
+                  <Text size="small" leading="compact" weight="plus">
+                    Pricing
+                  </Text>
+                  <Text size="small" leading="compact" className="text-ui-fg-subtle">
+                    Prodigi did not return a print cost for this SKU. Required
+                    options such as finish or wrap may be missing from the quote.
+                    You can still save and set a price later.
+                  </Text>
+                </div>
+              )}
 
               {unitCost && (
                 <div className="bg-ui-bg-subtle flex flex-col gap-y-3 rounded-md px-4 py-3">
@@ -499,6 +517,7 @@ const EditOfferingDrawer = ({
             finish_options: result.product.finish_options ?? [],
             prodigi_unit_cost: cost,
             price_currency: currency,
+            raw_prodigi_data: result.raw_prodigi_data ?? null,
             needs_review: false,
           },
         }
@@ -780,9 +799,11 @@ const EditOfferingDrawer = ({
 
 const PrintCatalogPage = () => {
   const navigate = useNavigate()
+  const queryClient = useQueryClient()
   const [addOpen, setAddOpen] = useState(false)
   const [editing, setEditing] = useState<AdminPrintOffering | null>(null)
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
+  const [confirmRefetch, setConfirmRefetch] = useState(false)
 
   const { data: offeringsData, isLoading, isError, error } = useQuery({
     queryKey: ["print-offerings"],
@@ -812,6 +833,47 @@ const PrintCatalogPage = () => {
     10
   const sets = setsData?.offering_sets ?? []
 
+  const refetchAll = useMutation({
+    mutationFn: () =>
+      sdk.client.fetch<RefetchPrintOfferingsResponse>(
+        "/admin/print-offerings/refetch",
+        { method: "POST", body: {} }
+      ),
+    onSuccess: (result) => {
+      queryClient.invalidateQueries({ queryKey: ["print-offerings"] })
+      queryClient.invalidateQueries({ queryKey: ["offering-sets"] })
+      setConfirmRefetch(false)
+
+      const failureNote = result.failed.length
+        ? ` ${result.failed.length} failed (flagged for review).`
+        : ""
+      const variantNote =
+        result.variants_updated > 0
+          ? ` Updated ${result.variants_updated} product variant${
+              result.variants_updated === 1 ? "" : "s"
+            }.`
+          : ""
+
+      toast.success(
+        `Re-fetched ${result.updated} of ${result.checked} offering${
+          result.checked === 1 ? "" : "s"
+        }.${variantNote}${failureNote}`
+      )
+
+      if (result.failed.length) {
+        toast.error(
+          result.failed
+            .slice(0, 5)
+            .map((entry) => `${entry.sku}: ${entry.reason}`)
+            .join(" · ")
+        )
+      }
+    },
+    onError: (err: Error) => {
+      toast.error(err.message || "Failed to re-fetch offerings from Prodigi")
+    },
+  })
+
   return (
     <Container className="divide-y p-0">
       <div className="flex items-center justify-between px-6 py-4">
@@ -828,6 +890,15 @@ const PrintCatalogPage = () => {
             onClick={() => navigate("/prodigi/offering-sets")}
           >
             Offering Sets
+          </Button>
+          <Button
+            size="small"
+            variant="secondary"
+            onClick={() => setConfirmRefetch(true)}
+            isLoading={refetchAll.isPending}
+            disabled={!allOfferings.length || refetchAll.isPending}
+          >
+            Re-fetch all
           </Button>
           <Button size="small" onClick={() => setAddOpen(true)}>
             + Add SKU
@@ -905,6 +976,37 @@ const PrintCatalogPage = () => {
         onOpenChange={(open) => !open && setEditing(null)}
         onOfferingUpdated={setEditing}
       />
+
+      <Prompt
+        open={confirmRefetch}
+        onOpenChange={(open) => {
+          if (!open && refetchAll.isPending) {
+            return
+          }
+          setConfirmRefetch(open)
+        }}
+      >
+        <Prompt.Content>
+          <Prompt.Header>
+            <Prompt.Title>Re-fetch all offerings from Prodigi</Prompt.Title>
+            <Prompt.Description>
+              This updates print costs, specs, finish options, and storefront
+              size labels for every catalog SKU, then pushes new prices onto
+              linked product variants. Digital items are skipped. It may take a
+              minute.
+            </Prompt.Description>
+          </Prompt.Header>
+          <Prompt.Footer>
+            <Prompt.Cancel disabled={refetchAll.isPending}>Cancel</Prompt.Cancel>
+            <Prompt.Action
+              onClick={() => refetchAll.mutate()}
+              disabled={refetchAll.isPending}
+            >
+              Re-fetch all
+            </Prompt.Action>
+          </Prompt.Footer>
+        </Prompt.Content>
+      </Prompt>
     </Container>
   )
 }

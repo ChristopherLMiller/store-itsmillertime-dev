@@ -16,6 +16,11 @@ export const CreatePrintOfferingSchema = z.object({
 })
 export type CreatePrintOfferingSchema = z.infer<typeof CreatePrintOfferingSchema>
 
+export const RefetchPrintOfferingsSchema = z.object({})
+export type RefetchPrintOfferingsSchema = z.infer<
+  typeof RefetchPrintOfferingsSchema
+>
+
 export const UpdatePrintOfferingSchema = z.object({
   label: z.string().min(1).optional(),
   category: z.enum(["print", "canvas", "metal", "digital"]).optional(),
@@ -76,6 +81,11 @@ export const printOfferingsMiddlewares: MiddlewareRoute[] = [
     matcher: "/admin/print-offerings",
     method: "POST",
     middlewares: [validateAndTransformBody(CreatePrintOfferingSchema)],
+  },
+  {
+    matcher: "/admin/print-offerings/refetch",
+    method: "POST",
+    middlewares: [validateAndTransformBody(RefetchPrintOfferingsSchema)],
   },
   {
     matcher: "/admin/print-offerings/:id",

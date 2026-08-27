@@ -3,6 +3,7 @@ import {
   transform,
   WorkflowResponse,
 } from "@medusajs/framework/workflows-sdk"
+import { quoteAttributesFromProduct } from "../modules/prodigi/parse-prodigi-attributes"
 import {
   computeRetailPrice,
   getDefaultMarkupPercent,
@@ -28,9 +29,15 @@ export const createPrintOfferingWorkflow = createWorkflow(
       prodigi_sku: input.prodigi_sku,
     })
 
-    const unitCost = fetchProdigiUnitCostStep({
-      prodigi_sku: input.prodigi_sku,
-    })
+    const unitCostInput = transform({ specs }, ({ specs }) => ({
+      prodigi_sku: specs.sku,
+      attributes: quoteAttributesFromProduct({
+        attributes: specs.raw.attributes,
+        finish_options: specs.finish_options,
+      }),
+    }))
+
+    const unitCost = fetchProdigiUnitCostStep(unitCostInput)
 
     const offeringData = transform({ input, specs, unitCost }, (data) => {
       const markupPercent =

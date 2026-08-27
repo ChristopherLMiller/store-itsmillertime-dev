@@ -38,6 +38,7 @@ export async function GET(
       product: toPublicSpecs(result.product),
       attributes: result.attributes,
       unit_cost: result.unit_cost,
+      raw_prodigi_data: result.product.raw,
     })
   }
 

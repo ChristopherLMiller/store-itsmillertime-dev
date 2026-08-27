@@ -5,13 +5,17 @@ import type { ProdigiUnitCost } from "../../modules/prodigi/types"
 
 type FetchProdigiUnitCostInput = {
   prodigi_sku: string
+  attributes?: Record<string, string>
 }
 
 export const fetchProdigiUnitCostStep = createStep(
   "fetch-prodigi-unit-cost",
   async (input: FetchProdigiUnitCostInput, { container }) => {
     const prodigi = container.resolve(PRODIGI_MODULE) as ProdigiModuleService
-    const unitCost = await prodigi.getUnitCost(input.prodigi_sku)
+    const unitCost = await prodigi.getUnitCost(
+      input.prodigi_sku,
+      input.attributes
+    )
 
     return new StepResponse<ProdigiUnitCost | null>(unitCost)
   }
