@@ -146,7 +146,7 @@ const OfferingSetsPage = () => {
   const [editForm, setEditForm] = useState<SetFormState | null>(null)
   const [deletingSet, setDeletingSet] = useState<AdminOfferingSet | null>(null)
 
-  const { data: setsData, isLoading } = useQuery({
+  const { data: setsData, isLoading, isError, error } = useQuery({
     queryKey: ["offering-sets"],
     queryFn: () =>
       sdk.client.fetch<{ offering_sets: AdminOfferingSet[] }>(
@@ -252,6 +252,13 @@ const OfferingSetsPage = () => {
         {isLoading ? (
           <Text size="small" leading="compact" className="text-ui-fg-subtle">
             Loading sets...
+          </Text>
+        ) : isError ? (
+          <Text size="small" leading="compact" className="text-ui-fg-error">
+            Could not load offering sets
+            {error instanceof Error && error.message
+              ? `: ${error.message}`
+              : "."}
           </Text>
         ) : sets.length === 0 ? (
           <Text size="small" leading="compact" className="text-ui-fg-subtle">

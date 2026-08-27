@@ -82,3 +82,14 @@ export function prodigiAttributesForFinish(
 
   return { finish }
 }
+
+/** Medusa json columns are typed as Record; finish lists are stored as a JSON array. */
+export function finishOptionsForStorage(
+  value: string[] | null | undefined
+): Record<string, unknown> | null | undefined {
+  if (value === undefined) {
+    return undefined
+  }
+
+  return value as unknown as Record<string, unknown> | null
+}

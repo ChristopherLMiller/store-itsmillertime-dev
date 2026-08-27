@@ -784,7 +784,7 @@ const PrintCatalogPage = () => {
   const [editing, setEditing] = useState<AdminPrintOffering | null>(null)
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
 
-  const { data: offeringsData, isLoading } = useQuery({
+  const { data: offeringsData, isLoading, isError, error } = useQuery({
     queryKey: ["print-offerings"],
     queryFn: () =>
       sdk.client.fetch<{ offerings: AdminPrintOffering[]; count: number }>(
@@ -870,6 +870,13 @@ const PrintCatalogPage = () => {
         {isLoading ? (
           <Text size="small" leading="compact" className="text-ui-fg-subtle">
             Loading offerings...
+          </Text>
+        ) : isError ? (
+          <Text size="small" leading="compact" className="text-ui-fg-error">
+            Could not load print offerings
+            {error instanceof Error && error.message
+              ? `: ${error.message}`
+              : "."}
           </Text>
         ) : offerings.length === 0 ? (
           <Text size="small" leading="compact" className="text-ui-fg-subtle">

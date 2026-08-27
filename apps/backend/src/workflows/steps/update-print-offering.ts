@@ -5,7 +5,7 @@ import {
   computeRetailPrice,
   normalizePriceCurrency,
 } from "../../utils/print-pricing"
-import { finishesDiffer } from "../../utils/print-options"
+import { finishesDiffer, finishOptionsForStorage } from "../../utils/print-options"
 
 export type UpdatePrintOfferingStepInput = {
   id: string
@@ -49,7 +49,7 @@ export const updatePrintOfferingStep = createStep(
     })
     const previousSetIds = (previous.sets ?? []).map((s) => s.id)
 
-    const { id, set_ids, ...data } = input
+    const { id, set_ids, finish_options, ...data } = input
 
     const nextUnitCost =
       input.prodigi_unit_cost !== undefined
@@ -80,6 +80,9 @@ export const updatePrintOfferingStep = createStep(
     const updated = await printCatalog.updatePrintOfferings({
       id,
       ...data,
+      ...(finish_options !== undefined
+        ? { finish_options: finishOptionsForStorage(finish_options) }
+        : {}),
       prodigi_unit_cost: nextUnitCost,
       markup_percent: nextMarkup,
       retail_price: nextRetailPrice,

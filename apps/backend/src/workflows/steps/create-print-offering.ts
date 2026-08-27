@@ -1,6 +1,7 @@
 import { createStep, StepResponse } from "@medusajs/framework/workflows-sdk"
 import { PRINT_CATALOG_MODULE } from "../../modules/print-catalog"
 import type PrintCatalogModuleService from "../../modules/print-catalog/service"
+import { finishOptionsForStorage } from "../../utils/print-options"
 
 export type CreatePrintOfferingStepInput = {
   prodigi_sku: string
@@ -28,10 +29,11 @@ export const createPrintOfferingStep = createStep(
       PRINT_CATALOG_MODULE
     ) as PrintCatalogModuleService
 
-    const { set_ids, ...data } = input
+    const { set_ids, finish_options, ...data } = input
 
     const offering = await printCatalog.createPrintOfferings({
       ...data,
+      finish_options: finishOptionsForStorage(finish_options),
       ...(set_ids?.length ? { sets: set_ids } : {}),
     })
 
