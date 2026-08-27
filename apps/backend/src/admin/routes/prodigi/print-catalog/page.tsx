@@ -120,6 +120,9 @@ const PrefixSuggestions = ({
             {suggestion.sku}
             {suggestion.paper_type ? ` · ${suggestion.paper_type}` : ""}
             {suggestion.weight_gsm ? ` · ${suggestion.weight_gsm}gsm` : ""}
+            {suggestion.finish_options?.length
+              ? ` · ${suggestion.finish_options.join(" / ")}`
+              : ""}
           </Text>
         </button>
       ))}
@@ -493,6 +496,7 @@ const EditOfferingDrawer = ({
             substrate: result.product.substrate,
             paper_type: result.product.paper_type,
             weight_gsm: result.product.weight_gsm,
+            finish_options: result.product.finish_options ?? [],
             prodigi_unit_cost: cost,
             price_currency: currency,
             needs_review: false,

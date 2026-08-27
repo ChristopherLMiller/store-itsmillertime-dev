@@ -12,6 +12,7 @@ export type CreatePrintOfferingStepInput = {
   substrate?: string | null
   paper_type?: string | null
   weight_gsm?: number | null
+  finish_options?: string[] | null
   prodigi_unit_cost?: number | null
   markup_percent?: number
   retail_price?: number | null

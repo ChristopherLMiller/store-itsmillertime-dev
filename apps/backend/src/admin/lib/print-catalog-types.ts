@@ -18,6 +18,7 @@ export type AdminPrintOffering = {
   substrate: string | null
   paper_type: string | null
   weight_gsm: number | null
+  finish_options?: string[] | null
   prodigi_unit_cost: number | null
   markup_percent: number | null
   retail_price: number | null
@@ -54,6 +55,7 @@ export type ProdigiFetchedSpecs = {
   substrate: string | null
   paper_type: string | null
   weight_gsm: number | null
+  finish_options?: string[]
   suggested_label: string
   attribute_specs?: ProdigiAttributeSpecs
   print_area_specs?: ProdigiPrintAreaSpecs
@@ -64,6 +66,7 @@ export type ProdigiAttributeSpecs = {
   substrate: string | null
   weight_gsm: number | null
   size: string | null
+  finish_options?: string[]
   other: Record<string, string>
   order_options: Record<string, string[]>
 }

@@ -2,8 +2,13 @@ import { HttpTypes } from "@medusajs/types"
 
 export const PAPER_OPTION_TITLE = "Paper"
 export const FORMAT_OPTION_TITLE = "Format"
+export const FINISH_OPTION_TITLE = "Finish"
 
-const OPTION_ORDER = [PAPER_OPTION_TITLE, FORMAT_OPTION_TITLE]
+const OPTION_ORDER = [
+  PAPER_OPTION_TITLE,
+  FORMAT_OPTION_TITLE,
+  FINISH_OPTION_TITLE,
+]
 
 export function getSortedProductOptions(
   options: HttpTypes.StoreProductOption[] | null | undefined
@@ -63,6 +68,39 @@ export function getFormatsForPaper(product: HttpTypes.StoreProduct) {
     const formats = map.get(paper) ?? new Set<string>()
     formats.add(format)
     map.set(paper, formats)
+  }
+
+  return map
+}
+
+export function getFinishesForPaperAndFormat(product: HttpTypes.StoreProduct) {
+  const map = new Map<string, Set<string>>()
+
+  for (const variant of product.variants ?? []) {
+    const paper = getVariantOptionValue(
+      variant,
+      PAPER_OPTION_TITLE,
+      product.options
+    )
+    const format = getVariantOptionValue(
+      variant,
+      FORMAT_OPTION_TITLE,
+      product.options
+    )
+    const finish = getVariantOptionValue(
+      variant,
+      FINISH_OPTION_TITLE,
+      product.options
+    )
+
+    if (!paper || !format || !finish) {
+      continue
+    }
+
+    const key = `${paper}::${format}`
+    const finishes = map.get(key) ?? new Set<string>()
+    finishes.add(finish)
+    map.set(key, finishes)
   }
 
   return map

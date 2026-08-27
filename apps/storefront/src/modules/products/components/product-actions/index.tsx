@@ -3,6 +3,9 @@
 import { addToCart } from "@lib/data/cart"
 import { useIntersection } from "@lib/hooks/use-in-view"
 import {
+  FINISH_OPTION_TITLE,
+  FORMAT_OPTION_TITLE,
+  getFinishesForPaperAndFormat,
   getFormatsForPaper,
   getSortedProductOptions,
   PAPER_OPTION_TITLE,
@@ -55,12 +58,37 @@ export default function ProductActions({
     [sortedOptions]
   )
 
+  const formatOption = useMemo(
+    () => sortedOptions.find((option) => option.title === FORMAT_OPTION_TITLE),
+    [sortedOptions]
+  )
+
+  const finishOption = useMemo(
+    () => sortedOptions.find((option) => option.title === FINISH_OPTION_TITLE),
+    [sortedOptions]
+  )
+
   const selectedPaper = paperOption ? options[paperOption.id] : undefined
+  const selectedFormat = formatOption ? options[formatOption.id] : undefined
 
   const formatValuesByPaper = useMemo(
     () => getFormatsForPaper(product),
     [product]
   )
+
+  const finishValuesByPaperFormat = useMemo(
+    () => getFinishesForPaperAndFormat(product),
+    [product]
+  )
+
+  const allowedFinishes = useMemo(() => {
+    if (!selectedPaper || !selectedFormat) {
+      return undefined
+    }
+    return finishValuesByPaperFormat.get(`${selectedPaper}::${selectedFormat}`)
+  }, [finishValuesByPaperFormat, selectedPaper, selectedFormat])
+
+  const showFinishPicker = (allowedFinishes?.size ?? 0) > 1
 
   // If there is only 1 variant, preselect the options
   useEffect(() => {
@@ -81,43 +109,68 @@ export default function ProductActions({
     })
   }, [product.variants, options])
 
+  const withValidFinish = (
+    next: Record<string, string | undefined>,
+    paper: string | undefined,
+    format: string | undefined
+  ) => {
+    if (!finishOption || !paper || !format) {
+      return next
+    }
+
+    const allowed = finishValuesByPaperFormat.get(`${paper}::${format}`)
+    if (!allowed?.size) {
+      return next
+    }
+
+    const currentFinish = next[finishOption.id]
+    if (currentFinish && allowed.has(currentFinish)) {
+      return next
+    }
+
+    const firstFinish = finishOption.values?.find((entry) =>
+      allowed.has(entry.value)
+    )?.value
+
+    return {
+      ...next,
+      [finishOption.id]: firstFinish,
+    }
+  }
+
   const setOptionValue = (optionId: string, value: string) => {
     setOptions((prev) => {
-      const next = {
+      let next = {
         ...prev,
         [optionId]: value,
       }
 
-      if (paperOption?.id !== optionId || !paperOption) {
-        return next
+      if (paperOption?.id === optionId) {
+        const allowedFormats = formatValuesByPaper.get(value)
+        if (allowedFormats?.size && formatOption) {
+          const currentFormat = next[formatOption.id]
+          if (!currentFormat || !allowedFormats.has(currentFormat)) {
+            next = {
+              ...next,
+              [formatOption.id]: formatOption.values?.find((entry) =>
+                allowedFormats.has(entry.value)
+              )?.value,
+            }
+          }
+        }
+
+        return withValidFinish(
+          next,
+          value,
+          formatOption ? next[formatOption.id] : undefined
+        )
       }
 
-      const allowedFormats = formatValuesByPaper.get(value)
-      if (!allowedFormats?.size) {
-        return next
+      if (formatOption?.id === optionId) {
+        return withValidFinish(next, selectedPaper, value)
       }
 
-      const formatOption = sortedOptions.find(
-        (option) => option.title !== PAPER_OPTION_TITLE
-      )
-
-      if (!formatOption) {
-        return next
-      }
-
-      const currentFormat = next[formatOption.id]
-      if (currentFormat && allowedFormats.has(currentFormat)) {
-        return next
-      }
-
-      const firstFormat = formatOption.values?.find((entry) =>
-        allowedFormats.has(entry.value)
-      )?.value
-
-      return {
-        ...next,
-        [formatOption.id]: firstFormat,
-      }
+      return next
     })
   }
 
@@ -196,10 +249,19 @@ export default function ProductActions({
           {(product.variants?.length ?? 0) > 1 && (
             <div className="flex flex-col gap-y-4">
               {sortedOptions.map((option) => {
+                if (
+                  option.title === FINISH_OPTION_TITLE &&
+                  !showFinishPicker
+                ) {
+                  return null
+                }
+
                 const allowedValues =
-                  option.title !== PAPER_OPTION_TITLE && selectedPaper
+                  option.title === FORMAT_OPTION_TITLE && selectedPaper
                     ? formatValuesByPaper.get(selectedPaper)
-                    : undefined
+                    : option.title === FINISH_OPTION_TITLE
+                      ? allowedFinishes
+                      : undefined
 
                 return (
                   <div key={option.id}>
@@ -255,6 +317,8 @@ export default function ProductActions({
           sortedOptions={sortedOptions}
           formatValuesByPaper={formatValuesByPaper}
           selectedPaper={selectedPaper}
+          allowedFinishes={allowedFinishes}
+          showFinishPicker={showFinishPicker}
         />
       </div>
     </>

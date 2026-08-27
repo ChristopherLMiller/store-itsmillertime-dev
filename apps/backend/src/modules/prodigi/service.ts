@@ -1,6 +1,9 @@
 import { MedusaError } from "@medusajs/framework/utils"
 import { resolveProdigiConfig } from "./config"
-import { parseProdigiAttributes } from "./parse-prodigi-attributes"
+import {
+  collectFinishOptionsFromVariants,
+  parseProdigiAttributes,
+} from "./parse-prodigi-attributes"
 import { parseProdigiPrintAreas } from "./parse-prodigi-print-areas"
 import {
   parseProdigiProductSpecs,
@@ -228,8 +231,13 @@ class ProdigiModuleService {
 
     const paper_type = attributeSpecs.paper_type ?? parsed.paper_type
     const weight_gsm = attributeSpecs.weight_gsm ?? parsed.weight_gsm
+    const finish_options = attributeSpecs.finish_options.length
+      ? attributeSpecs.finish_options
+      : collectFinishOptionsFromVariants(product.variants)
+    attributeSpecs.finish_options = finish_options
     const substrate =
       attributeSpecs.substrate ??
+      (finish_options.length === 1 ? finish_options[0] : null) ??
       this.inferSubstrate(product.sku, product.description)
     const sizeLabel =
       attributeSpecs.size ?? formatDisplaySize(width, height, units)
@@ -249,6 +257,7 @@ class ProdigiModuleService {
       substrate,
       paper_type,
       weight_gsm,
+      finish_options,
       suggested_label,
       attribute_specs: attributeSpecs,
       print_area_specs: printAreaSpecs,

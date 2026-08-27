@@ -13,9 +13,14 @@ import type { IProductModuleService } from "@medusajs/framework/types"
 import { buildVariantPrices } from "../utils/print-pricing"
 import { findLinkedVariants } from "../utils/linked-variants"
 import {
+  FINISH_OPTION_TITLE,
   FORMAT_OPTION_TITLE,
   PAPER_OPTION_TITLE,
 } from "./steps/prepare-offering-set-application"
+import {
+  buildPrintVariantSku,
+  buildPrintVariantTitle,
+} from "../utils/print-options"
 
 const CHUNK_SIZE = 50
 
@@ -38,9 +43,21 @@ function getOptionValueByTitle(
     ?.value?.trim() || undefined
 }
 
+function getVariantFinish(variant: LinkedVariant): string | null {
+  const fromMeta = variant.metadata?.prodigi_finish
+  if (typeof fromMeta === "string" && fromMeta.trim()) {
+    return fromMeta.trim()
+  }
+
+  return getOptionValueByTitle(variant, FINISH_OPTION_TITLE) ?? null
+}
+
 function buildVariantTitle(variant: LinkedVariant, offeringLabel: string) {
   const paper = getOptionValueByTitle(variant, PAPER_OPTION_TITLE)
-  return paper ? `${paper} · ${offeringLabel}` : offeringLabel
+  const finish = getVariantFinish(variant)
+  return paper
+    ? buildPrintVariantTitle(paper, offeringLabel, finish)
+    : offeringLabel
 }
 
 type OfferingWithVariants = {
@@ -74,6 +91,7 @@ async function loadOfferingWithVariants(
       "width",
       "height",
       "substrate",
+      "finish_options",
       "retail_price",
       "price_currency",
     ],
@@ -128,10 +146,16 @@ const updateLinkedVariantsStep = createStep(
     let updated = 0
     for (const batch of chunk(variants, CHUNK_SIZE)) {
       await productModule.upsertProductVariants(
-        batch.map((variant) => ({
+        batch.map((variant) => {
+          const finish = getVariantFinish(variant)
+          return {
           id: variant.id,
           title: buildVariantTitle(variant, offering.label),
-          sku: `${offering.prodigi_sku}__${variant.product_id}`,
+          sku: buildPrintVariantSku(
+            offering.prodigi_sku,
+            variant.product_id,
+            finish
+          ),
           metadata: {
             ...(variant.metadata ?? {}),
             prodigi_sku: offering.prodigi_sku,
@@ -139,15 +163,28 @@ const updateLinkedVariantsStep = createStep(
             width: offering.width,
             height: offering.height,
             substrate: offering.substrate,
+            prodigi_finish: finish,
           },
           ...(getOptionValueByTitle(variant, FORMAT_OPTION_TITLE)
             ? {
                 options: {
                   [FORMAT_OPTION_TITLE]: offering.label,
+                  ...(getOptionValueByTitle(variant, PAPER_OPTION_TITLE)
+                    ? {
+                        [PAPER_OPTION_TITLE]: getOptionValueByTitle(
+                          variant,
+                          PAPER_OPTION_TITLE
+                        ),
+                      }
+                    : {}),
+                  ...(finish
+                    ? { [FINISH_OPTION_TITLE]: finish }
+                    : {}),
                 },
               }
             : {}),
-        }))
+          }
+        })
       )
 
       if (prices?.length) {

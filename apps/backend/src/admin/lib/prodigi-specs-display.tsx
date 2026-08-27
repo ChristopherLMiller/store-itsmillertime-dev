@@ -77,6 +77,10 @@ function resolveDisplaySpecs(
     paper_type: specs?.paper_type ?? source.paper_type,
     weight_gsm: specs?.weight_gsm ?? source.weight_gsm,
     substrate: specs?.substrate ?? source.substrate,
+    finish_options:
+      (specs?.finish_options?.length
+        ? specs.finish_options
+        : source.finish_options) ?? [],
     other: specs?.other ?? {},
     order_options: specs?.order_options ?? {},
   }
@@ -127,7 +131,27 @@ export const ProdigiSpecsCard = ({
         label="Weight"
         value={display.weight_gsm ? `${display.weight_gsm} gsm` : null}
       />
-      <SpecRow label="Finish / substrate" value={display.substrate} />
+      <SpecRow
+        label={
+          display.finish_options.length > 1
+            ? "Finish (customer choice)"
+            : "Finish"
+        }
+        value={
+          display.finish_options.length
+            ? display.finish_options.join(", ")
+            : null
+        }
+      />
+      <SpecRow
+        label="Substrate"
+        value={
+          display.substrate &&
+          !display.finish_options.includes(display.substrate)
+            ? display.substrate
+            : null
+        }
+      />
 
       {printAreas?.primary && (
         <>

@@ -17,6 +17,7 @@ type PrintOfferingUpdatedEvent = {
   previous_set_ids: string[]
   new_set_ids: string[]
   specs_changed: boolean
+  finish_options_changed?: boolean
 }
 
 export default async function printOfferingUpdatedHandler({
@@ -41,12 +42,14 @@ export default async function printOfferingUpdatedHandler({
   // Specs/prices are propagated synchronously in the update API route so
   // variant prices are committed before the admin UI responds.
 
-  // Newly added to sets: create missing variants on subscribed products.
-  const addedSetIds = data.new_set_ids.filter(
-    (id) => !data.previous_set_ids.includes(id)
-  )
-  if (data.active && addedSetIds.length) {
-    const productsBySet = await findProductIdsForSets(container, addedSetIds)
+  // Newly added to sets, or finish choices changed: create missing variants
+  // on subscribed products.
+  const setsToReapply = data.new_set_ids.filter((id) => {
+    const newlyAdded = !data.previous_set_ids.includes(id)
+    return data.active && (newlyAdded || data.finish_options_changed)
+  })
+  if (setsToReapply.length) {
+    const productsBySet = await findProductIdsForSets(container, setsToReapply)
     for (const [setId, productIds] of productsBySet) {
       await reapplySetToProducts(container, setId, productIds)
     }

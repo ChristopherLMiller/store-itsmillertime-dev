@@ -23,6 +23,7 @@ export const updatePrintOfferingWorkflow = createWorkflow(
       previous_set_ids: result.previous_set_ids,
       new_set_ids: result.new_set_ids,
       specs_changed: result.specs_changed,
+      finish_options_changed: result.finish_options_changed,
     }))
 
     emitEventStep({

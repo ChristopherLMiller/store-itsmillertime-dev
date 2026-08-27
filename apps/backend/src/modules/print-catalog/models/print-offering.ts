@@ -11,6 +11,7 @@ export const PrintOffering = model.define("print_offering", {
   substrate: model.text().nullable(),
   paper_type: model.text().nullable(),
   weight_gsm: model.number().nullable(),
+  finish_options: model.array().nullable(),
   prodigi_unit_cost: model.float().nullable(),
   markup_percent: model.float().default(20),
   retail_price: model.float().nullable(),

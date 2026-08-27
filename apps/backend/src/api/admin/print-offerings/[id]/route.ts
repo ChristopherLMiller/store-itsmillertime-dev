@@ -21,6 +21,7 @@ const OFFERING_FIELDS = [
   "substrate",
   "paper_type",
   "weight_gsm",
+  "finish_options",
   "prodigi_unit_cost",
   "markup_percent",
   "retail_price",

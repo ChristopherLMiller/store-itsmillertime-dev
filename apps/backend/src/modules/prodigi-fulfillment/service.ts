@@ -9,6 +9,7 @@ import type {
   FulfillmentOption,
 } from "@medusajs/framework/types"
 import ProdigiClient from "../prodigi/service"
+import { prodigiAttributesForFinish } from "../../utils/print-options"
 
 export const PRODIGI_SHIPPING_METHODS = [
   { id: "Budget", name: "Budget Shipping" },
@@ -84,19 +85,37 @@ class ProdigiFulfillmentProviderService extends AbstractFulfillmentProviderServi
     const countryCode =
       context.shipping_address?.country_code?.toUpperCase() ?? "US"
 
-    const items = (context.items ?? [])
-      .map((item) => ({
-        sku: parseProdigiSku(
-          (item as { variant_sku?: string | null }).variant_sku
-        ),
-        copies: Number(item.quantity) || 1,
-      }))
-      .filter((item): item is { sku: string; copies: number } => !!item.sku)
-      .map((item) => ({
-        sku: item.sku,
-        copies: item.copies,
-        assets: [{ printArea: "default" }],
-      }))
+    const items = (context.items ?? []).flatMap((item) => {
+      const sku = parseProdigiSku(
+        (item as { variant_sku?: string | null }).variant_sku
+      )
+      if (!sku) {
+        return []
+      }
+
+      const metadata =
+        (
+          item as {
+            variant?: { metadata?: Record<string, unknown> | null }
+            metadata?: Record<string, unknown> | null
+          }
+        ).variant?.metadata ??
+        (item as { metadata?: Record<string, unknown> | null }).metadata
+      const finish =
+        typeof metadata?.prodigi_finish === "string"
+          ? metadata.prodigi_finish
+          : null
+      const attributes = prodigiAttributesForFinish(finish)
+
+      return [
+        {
+          sku,
+          copies: Number(item.quantity) || 1,
+          ...(attributes ? { attributes } : {}),
+          assets: [{ printArea: "default" as const }],
+        },
+      ]
+    })
 
     // No physical print items (e.g. all-digital cart): shipping is free.
     if (!items.length) {

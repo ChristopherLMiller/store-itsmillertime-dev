@@ -54,6 +54,7 @@ export const createPrintOfferingWorkflow = createWorkflow(
         substrate: data.specs.substrate,
         paper_type: data.specs.paper_type,
         weight_gsm: data.specs.weight_gsm,
+        finish_options: data.specs.finish_options,
         prodigi_unit_cost: costAmount,
         markup_percent: markupPercent,
         retail_price: retailPrice,

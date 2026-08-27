@@ -15,6 +15,8 @@ import { PRINT_CATALOG_MODULE } from "../modules/print-catalog"
 import {
   DIGITAL_FORMAT_VALUE,
   DIGITAL_PAPER_VALUE,
+  DEFAULT_FINISH_VALUE,
+  FINISH_OPTION_TITLE,
   FORMAT_OPTION_TITLE,
   PAPER_OPTION_TITLE,
   prepareOfferingSetApplicationStep,
@@ -22,6 +24,10 @@ import {
 import { normalizeProductOptionsStep } from "./steps/normalize-product-options"
 import { ensurePrintOptionsStep } from "./steps/ensure-print-options"
 import { buildVariantPrices } from "../utils/print-pricing"
+import {
+  buildPrintVariantSku,
+  buildPrintVariantTitle,
+} from "../utils/print-options"
 
 export type ApplyOfferingSetToProductInput = {
   product_id: string
@@ -44,14 +50,21 @@ export const applyOfferingSetToProductWorkflow = createWorkflow(
       product_variants: [
         ...plan.variants_to_create.map((v) => ({
           product_id: plan.product_id,
-          title: `${v.paper_name} · ${v.label}`,
+          title: buildPrintVariantTitle(v.paper_name, v.label, v.finish),
           options: {
             [PAPER_OPTION_TITLE]: v.paper_name,
             [FORMAT_OPTION_TITLE]: v.label,
+            ...(plan.has_finish_option && v.finish
+              ? { [FINISH_OPTION_TITLE]: v.finish }
+              : {}),
           },
           manage_inventory: false,
           prices: buildVariantPrices(v.retail_price, v.price_currency),
-          sku: `${v.prodigi_sku}__${plan.product_id}`,
+          sku: buildPrintVariantSku(
+            v.prodigi_sku,
+            plan.product_id,
+            v.finish
+          ),
           metadata: {
             print_offering_id: v.offering_id,
             offering_set_id: plan.offering_set_id,
@@ -60,6 +73,7 @@ export const applyOfferingSetToProductWorkflow = createWorkflow(
             width: v.width,
             height: v.height,
             substrate: v.substrate,
+            prodigi_finish: v.finish,
             fulfillment_type: "prodigi",
           },
         })),
@@ -71,6 +85,9 @@ export const applyOfferingSetToProductWorkflow = createWorkflow(
                 options: {
                   [PAPER_OPTION_TITLE]: DIGITAL_PAPER_VALUE,
                   [FORMAT_OPTION_TITLE]: DIGITAL_FORMAT_VALUE,
+                  ...(plan.has_finish_option
+                    ? { [FINISH_OPTION_TITLE]: DEFAULT_FINISH_VALUE }
+                    : {}),
                 },
                 manage_inventory: false,
                 prices: buildVariantPrices(
@@ -102,13 +119,21 @@ export const applyOfferingSetToProductWorkflow = createWorkflow(
     const upgradeInput = transform({ plan }, ({ plan }) => ({
       product_variants: plan.variants_to_upgrade.map((variant) => ({
         id: variant.variant_id,
-        title: `${variant.paper_name} · ${variant.format_label}`,
+        title: buildPrintVariantTitle(
+          variant.paper_name,
+          variant.format_label,
+          variant.finish
+        ),
         options: {
           [PAPER_OPTION_TITLE]: variant.paper_name,
           [FORMAT_OPTION_TITLE]: variant.format_label,
+          ...(plan.has_finish_option && variant.finish
+            ? { [FINISH_OPTION_TITLE]: variant.finish }
+            : {}),
         },
         metadata: {
           offering_set_id: plan.offering_set_id,
+          ...(variant.finish ? { prodigi_finish: variant.finish } : {}),
         },
       })),
     }))

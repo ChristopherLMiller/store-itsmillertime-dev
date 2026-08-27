@@ -7,6 +7,7 @@ import ChevronDown from "@modules/common/icons/chevron-down"
 import X from "@modules/common/icons/x"
 
 import { getProductPrice } from "@lib/util/get-product-price"
+import { FORMAT_OPTION_TITLE, FINISH_OPTION_TITLE } from "@lib/util/product-options"
 import OptionSelect from "./option-select"
 import { HttpTypes } from "@medusajs/types"
 import { isSimpleProduct } from "@lib/util/product"
@@ -24,6 +25,8 @@ type MobileActionsProps = {
   sortedOptions: HttpTypes.StoreProductOption[]
   formatValuesByPaper: Map<string, Set<string>>
   selectedPaper?: string
+  allowedFinishes?: Set<string>
+  showFinishPicker?: boolean
 }
 
 const MobileActions: React.FC<MobileActionsProps> = ({
@@ -39,6 +42,8 @@ const MobileActions: React.FC<MobileActionsProps> = ({
   sortedOptions,
   formatValuesByPaper,
   selectedPaper,
+  allowedFinishes,
+  showFinishPicker,
 }) => {
   const { state, open, close } = useToggleState()
 
@@ -181,10 +186,20 @@ const MobileActions: React.FC<MobileActionsProps> = ({
                     {(product.variants?.length ?? 0) > 1 && (
                       <div className="flex flex-col gap-y-6">
                         {sortedOptions.map((option) => {
+                          if (
+                            option.title === FINISH_OPTION_TITLE &&
+                            !showFinishPicker
+                          ) {
+                            return null
+                          }
+
                           const allowedValues =
-                            option.title !== "Paper" && selectedPaper
+                            option.title === FORMAT_OPTION_TITLE &&
+                            selectedPaper
                               ? formatValuesByPaper.get(selectedPaper)
-                              : undefined
+                              : option.title === FINISH_OPTION_TITLE
+                                ? allowedFinishes
+                                : undefined
 
                           return (
                             <div key={option.id}>

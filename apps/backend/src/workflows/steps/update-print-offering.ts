@@ -5,6 +5,7 @@ import {
   computeRetailPrice,
   normalizePriceCurrency,
 } from "../../utils/print-pricing"
+import { finishesDiffer } from "../../utils/print-options"
 
 export type UpdatePrintOfferingStepInput = {
   id: string
@@ -18,6 +19,7 @@ export type UpdatePrintOfferingStepInput = {
   substrate?: string | null
   paper_type?: string | null
   weight_gsm?: number | null
+  finish_options?: string[] | null
   prodigi_unit_cost?: number | null
   markup_percent?: number
   retail_price?: number | null
@@ -32,6 +34,7 @@ export type UpdatePrintOfferingStepResult = {
   previous_set_ids: string[]
   new_set_ids: string[]
   specs_changed: boolean
+  finish_options_changed: boolean
 }
 
 export const updatePrintOfferingStep = createStep(
@@ -84,6 +87,10 @@ export const updatePrintOfferingStep = createStep(
       ...(set_ids ? { sets: set_ids } : {}),
     })
 
+    const finishOptionsChanged =
+      input.finish_options !== undefined &&
+      finishesDiffer(previous.finish_options, input.finish_options)
+
     const specsChanged =
       (input.label !== undefined && input.label !== previous.label) ||
       (input.category !== undefined && input.category !== previous.category) ||
@@ -92,6 +99,7 @@ export const updatePrintOfferingStep = createStep(
       (input.substrate !== undefined && input.substrate !== previous.substrate) ||
       (input.paper_type !== undefined && input.paper_type !== previous.paper_type) ||
       (input.weight_gsm !== undefined && input.weight_gsm !== previous.weight_gsm) ||
+      finishOptionsChanged ||
       (input.prodigi_unit_cost !== undefined &&
         input.prodigi_unit_cost !== previous.prodigi_unit_cost) ||
       (input.markup_percent !== undefined &&
@@ -110,6 +118,7 @@ export const updatePrintOfferingStep = createStep(
       previous_set_ids: previousSetIds,
       new_set_ids: set_ids ?? previousSetIds,
       specs_changed: specsChanged,
+      finish_options_changed: finishOptionsChanged,
     }
 
     return new StepResponse(result, {
@@ -124,6 +133,7 @@ export const updatePrintOfferingStep = createStep(
       substrate: previous.substrate,
       paper_type: previous.paper_type,
       weight_gsm: previous.weight_gsm,
+      finish_options: previous.finish_options,
       prodigi_unit_cost: previous.prodigi_unit_cost,
       markup_percent: previous.markup_percent,
       retail_price: previous.retail_price,

@@ -56,6 +56,7 @@ export type NormalizedProdigiSpecs = {
   substrate: string | null
   paper_type: string | null
   weight_gsm: number | null
+  finish_options: string[]
   suggested_label: string
   attribute_specs: ProdigiAttributeSpecs
   print_area_specs: ProdigiPrintAreaSpecs

@@ -15,6 +15,7 @@ const toPublicSpecs = (specs: NormalizedProdigiSpecs) => ({
   substrate: specs.substrate,
   paper_type: specs.paper_type,
   weight_gsm: specs.weight_gsm,
+  finish_options: specs.finish_options,
   suggested_label: specs.suggested_label,
   attribute_specs: specs.attribute_specs,
   print_area_specs: specs.print_area_specs,

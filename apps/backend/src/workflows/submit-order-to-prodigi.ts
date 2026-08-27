@@ -14,6 +14,7 @@ import { PRODIGI_MODULE } from "../modules/prodigi"
 import type ProdigiModuleService from "../modules/prodigi/service"
 import { parseProdigiSku } from "../modules/prodigi-fulfillment/service"
 import { resolveEcommerceEnvironment } from "../utils/ecommerce-environment"
+import { prodigiAttributesForFinish } from "../utils/print-options"
 
 export type SubmitOrderToProdigiInput = {
   order_id: string
@@ -24,6 +25,7 @@ type ProdigiSubmissionItem = {
   quantity: number
   prodigi_sku: string
   asset_url: string
+  attributes?: Record<string, string>
 }
 
 type ProdigiSubmissionPlan = {
@@ -162,6 +164,11 @@ const prepareProdigiSubmissionStep = createStep(
         quantity: Number(item.quantity) || 1,
         prodigi_sku: prodigiSku,
         asset_url: assetUrl,
+        attributes: prodigiAttributesForFinish(
+          typeof variantMeta.prodigi_finish === "string"
+            ? variantMeta.prodigi_finish
+            : null
+        ),
       })
     }
 
@@ -230,6 +237,7 @@ const createProdigiOrderStep = createStep(
         sku: item.prodigi_sku,
         copies: item.quantity,
         sizing: "fillPrintArea",
+        ...(item.attributes ? { attributes: item.attributes } : {}),
         assets: [{ printArea: "default", url: item.asset_url }],
       })),
       metadata: {
