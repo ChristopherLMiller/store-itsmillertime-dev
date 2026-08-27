@@ -2,7 +2,7 @@ import type {
   AuthenticatedMedusaRequest,
   MedusaResponse,
 } from "@medusajs/framework/http"
-import { refetchPrintOfferingsWorkflow } from "../../../../../workflows/refetch-print-offerings"
+import { refetchPrintOfferingsWorkflow } from "../../../../workflows/refetch-print-offerings"
 import type { RefetchPrintOfferingsSchema } from "../middlewares"
 
 export async function POST(
