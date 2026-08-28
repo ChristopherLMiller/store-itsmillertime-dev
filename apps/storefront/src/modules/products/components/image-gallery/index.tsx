@@ -1,41 +1,31 @@
 import { HttpTypes } from "@medusajs/types"
-import { Container } from "@modules/common/components/ui"
-import Image from "next/image"
+import PhotoFrame from "@modules/common/components/photo-frame"
 
 type ImageGalleryProps = {
   images: HttpTypes.StoreProductImage[]
+  alt?: string
 }
 
-const ImageGallery = ({ images }: ImageGalleryProps) => {
+const ImageGallery = ({ images, alt }: ImageGalleryProps) => {
+  const photos = images.filter((image) => image?.id && image.url)
+
+  if (!photos.length) {
+    return (
+      <PhotoFrame src={null} aspect="stage" alt={alt} />
+    )
+  }
+
   return (
-    <div className="flex items-start relative">
-      <div className="flex flex-col flex-1 small:mx-16 gap-y-4">
-        {images
-          .filter((image) => image?.id && image.url)
-          .map((image, index) => {
-          return (
-            <Container
-              key={image.id}
-              className="relative aspect-[29/34] w-full overflow-hidden bg-ui-bg-subtle"
-              id={image.id}
-            >
-              {!!image.url && (
-                <Image
-                  src={image.url}
-                  priority={index <= 2 ? true : false}
-                  className="absolute inset-0 rounded-rounded"
-                  alt={`Product image ${index + 1}`}
-                  fill
-                  sizes="(max-width: 576px) 280px, (max-width: 768px) 360px, (max-width: 992px) 480px, 800px"
-                  style={{
-                    objectFit: "cover",
-                  }}
-                />
-              )}
-            </Container>
-          )
-        })}
-      </div>
+    <div className="flex flex-col gap-4">
+      {photos.map((image, index) => (
+        <PhotoFrame
+          key={image.id}
+          src={image.url}
+          alt={alt ? `${alt}${photos.length > 1 ? ` ${index + 1}` : ""}` : ""}
+          aspect="stage"
+          priority={index === 0}
+        />
+      ))}
     </div>
   )
 }

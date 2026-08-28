@@ -23,7 +23,11 @@ export default async function RelatedProducts({
   if (region?.id) {
     queryParams.region_id = region.id
   }
-  if (product.collection_id) {
+  if (product.categories?.length) {
+    queryParams.category_id = product.categories
+      .map((category) => category.id)
+      .filter(Boolean) as string[]
+  } else if (product.collection_id) {
     queryParams.collection_id = [product.collection_id]
   }
   const tagIds = product.tags?.map((t) => t.id).filter(Boolean) as string[]
@@ -51,20 +55,17 @@ export default async function RelatedProducts({
   }
 
   return (
-    <div className="product-page-constraint">
-      <div className="flex flex-col items-center text-center mb-16">
-        <span className="text-base-regular text-gray-600 mb-6">
-          Related products
+    <div>
+      <div className="flex flex-col mb-10">
+        <span className="text-sm uppercase tracking-[0.18em] text-stone-500 mb-2">
+          More like this
         </span>
-        <p className="text-2xl-regular text-ui-fg-base max-w-lg">
-          You might also want to check out these products.
-        </p>
       </div>
 
-      <ul className="grid grid-cols-2 small:grid-cols-3 medium:grid-cols-4 gap-x-6 gap-y-8">
-        {products.map((product) => (
-          <li key={product.id}>
-            <Product region={region} product={product} />
+      <ul className="grid grid-cols-1 small:grid-cols-2 medium:grid-cols-3 gap-x-8 gap-y-10">
+        {products.map((relatedProduct) => (
+          <li key={relatedProduct.id}>
+            <Product region={region} product={relatedProduct} />
           </li>
         ))}
       </ul>

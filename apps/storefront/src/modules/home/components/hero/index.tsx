@@ -1,31 +1,32 @@
-import { Github } from "@medusajs/icons";
-import { Button, Heading } from "@modules/common/components/ui";
+import { galleryHomeUrl, MAIN_SITE_URL, SITE_NAME } from "@lib/util/site"
+import { Heading } from "@modules/common/components/ui"
+
 const Hero = () => {
   return (
-    <div className="h-[75vh] w-full border-b border-ui-border-base relative bg-ui-bg-subtle">
-      <div className="absolute inset-0 z-10 flex flex-col justify-center items-center text-center small:p-32 gap-6">
-        <span>
-          <Heading
-            level="h1"
-            className="text-3xl leading-10 text-ui-fg-base font-normal"
-          >
-            Ecommerce Starter Template
-          </Heading>
-          <Heading
-            level="h2"
-            className="text-3xl leading-10 text-ui-fg-subtle font-normal"
-          >
-            Powered by Medusa and Next.js
-          </Heading>
-        </span>
-        <a href="https://github.com/medusajs/dtc-starter" target="_blank">
-          <Button variant="secondary">
-            View on GitHub <Github />
-          </Button>
+    <div className="w-full border-b border-stone-200">
+      <div className="content-container py-16 small:py-24 max-w-3xl">
+        <Heading
+          level="h1"
+          className="text-3xl small:text-4xl font-normal leading-tight text-stone-900"
+        >
+          {SITE_NAME}
+        </Heading>
+        <p className="mt-4 text-lg text-stone-600 leading-relaxed">
+          Prints from the{" "}
+          <a className="underline underline-offset-4 hover:text-stone-900" href={MAIN_SITE_URL}>
+            ItsMillerTime
+          </a>{" "}
+          gallery, plus models, games, and other studio work.
+        </p>
+        <a
+          href={galleryHomeUrl()}
+          className="inline-block mt-6 text-sm text-stone-700 underline underline-offset-4 hover:text-stone-900"
+        >
+          Browse the gallery
         </a>
       </div>
     </div>
-  );
-};
+  )
+}
 
-export default Hero;
+export default Hero

@@ -7,8 +7,10 @@ import ChevronDown from "@modules/common/icons/chevron-down"
 import X from "@modules/common/icons/x"
 
 import { getProductPrice } from "@lib/util/get-product-price"
+import { compactSelectionLabel } from "@lib/util/print-format"
 import { FORMAT_OPTION_TITLE, FINISH_OPTION_TITLE } from "@lib/util/product-options"
 import OptionSelect from "./option-select"
+import PrintOptions from "@modules/products/components/print-options"
 import { HttpTypes } from "@medusajs/types"
 import { isSimpleProduct } from "@lib/util/product"
 
@@ -27,6 +29,10 @@ type MobileActionsProps = {
   selectedPaper?: string
   allowedFinishes?: Set<string>
   showFinishPicker?: boolean
+  printProduct?: boolean
+  paperOption?: HttpTypes.StoreProductOption
+  formatOption?: HttpTypes.StoreProductOption
+  finishOption?: HttpTypes.StoreProductOption
 }
 
 const MobileActions: React.FC<MobileActionsProps> = ({
@@ -44,6 +50,10 @@ const MobileActions: React.FC<MobileActionsProps> = ({
   selectedPaper,
   allowedFinishes,
   showFinishPicker,
+  printProduct,
+  paperOption,
+  formatOption,
+  finishOption,
 }) => {
   const { state, open, close } = useToggleState()
 
@@ -81,7 +91,7 @@ const MobileActions: React.FC<MobileActionsProps> = ({
           leaveTo="opacity-0"
         >
           <div
-            className="bg-white flex flex-col gap-y-3 justify-center items-center text-large-regular p-4 h-full w-full border-t border-gray-200"
+            className="bg-[#f6f3ef] flex flex-col gap-y-3 justify-center items-center text-large-regular p-4 h-full w-full border-t border-stone-200"
             data-testid="mobile-actions"
           >
             <div className="flex items-center gap-x-2">
@@ -121,8 +131,13 @@ const MobileActions: React.FC<MobileActionsProps> = ({
                 <div className="flex items-center justify-between w-full">
                   <span>
                     {variant
-                      ? Object.values(options).join(" / ")
-                      : "Select Options"}
+                      ? compactSelectionLabel(
+                          options,
+                          paperOption,
+                          formatOption,
+                          finishOption
+                        ) || "Select size"
+                      : "Select size"}
                   </span>
                   <ChevronDown />
                 </div>
@@ -182,8 +197,22 @@ const MobileActions: React.FC<MobileActionsProps> = ({
                       <X />
                     </button>
                   </div>
-                  <div className="bg-white px-6 py-12">
-                    {(product.variants?.length ?? 0) > 1 && (
+                  <div className="bg-[#f6f3ef] px-6 py-10 max-h-[80vh] overflow-y-auto">
+                    {(product.variants?.length ?? 0) > 1 &&
+                      (printProduct ? (
+                        <PrintOptions
+                          product={product}
+                          paperOption={paperOption}
+                          formatOption={formatOption}
+                          finishOption={finishOption}
+                          options={options}
+                          updateOption={updateOptions}
+                          formatValuesByPaper={formatValuesByPaper}
+                          allowedFinishes={allowedFinishes}
+                          showFinishPicker={!!showFinishPicker}
+                          disabled={optionsDisabled}
+                        />
+                      ) : (
                       <div className="flex flex-col gap-y-6">
                         {sortedOptions.map((option) => {
                           if (
@@ -215,7 +244,7 @@ const MobileActions: React.FC<MobileActionsProps> = ({
                           )
                         })}
                       </div>
-                    )}
+                      ))}
                   </div>
                 </Dialog.Panel>
               </Transition.Child>

@@ -1,41 +1,25 @@
 import { Metadata } from "next"
 
-import FeaturedProducts from "@modules/home/components/featured-products"
+import { listCategories } from "@lib/data/categories"
+import { getDepartmentCategories } from "@lib/util/catalog"
+import { SITE_NAME } from "@lib/util/site"
+import DepartmentGrid from "@modules/home/components/department-grid"
 import Hero from "@modules/home/components/hero"
-import { listCollections } from "@lib/data/collections"
-import { getRegion } from "@lib/data/regions"
 
 export const metadata: Metadata = {
-  title: "Medusa Next.js Starter Template",
+  title: SITE_NAME,
   description:
-    "A performant frontend ecommerce starter template with Next.js 15 and Medusa.",
+    "The ItsMillerTime shop — prints, models, games, and 3D printed work.",
 }
 
-export default async function Home(props: {
-  params: Promise<{ countryCode: string }>
-}) {
-  const params = await props.params
-
-  const { countryCode } = params
-
-  const region = await getRegion(countryCode)
-
-  const { collections } = await listCollections({
-    fields: "id, handle, title",
-  })
-
-  if (!collections || !region) {
-    return null
-  }
+export default async function Home() {
+  const categories = await listCategories()
+  const departments = getDepartmentCategories(categories)
 
   return (
     <>
       <Hero />
-      <div className="py-12">
-        <ul className="flex flex-col gap-x-6">
-          <FeaturedProducts collections={collections} region={region} />
-        </ul>
-      </div>
+      <DepartmentGrid departments={departments} />
     </>
   )
 }

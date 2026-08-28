@@ -16,7 +16,9 @@ export const listCategories = async (query?: Record<string, unknown>) => {
       {
         query: {
           fields:
-            "*category_children, *products, *parent_category, *parent_category.parent_category",
+            "*category_children, *parent_category, *parent_category.parent_category, +metadata, +category_children.metadata, +rank",
+          include_descendants_tree: true,
+          include_ancestors_tree: true,
           limit,
           ...query,
         },
@@ -28,7 +30,7 @@ export const listCategories = async (query?: Record<string, unknown>) => {
 }
 
 export const getCategoryByHandle = async (categoryHandle: string[]) => {
-  const handle = `${categoryHandle.join("/")}`
+  const handle = categoryHandle[categoryHandle.length - 1]
 
   const next = {
     ...(await getCacheOptions("categories")),
@@ -39,8 +41,11 @@ export const getCategoryByHandle = async (categoryHandle: string[]) => {
       `/store/product-categories`,
       {
         query: {
-          fields: "*category_children, *products",
+          fields:
+            "*category_children, *parent_category, *parent_category.parent_category, +metadata, +category_children.metadata",
           handle,
+          include_descendants_tree: true,
+          include_ancestors_tree: true,
         },
         next,
         cache: fetchCache,

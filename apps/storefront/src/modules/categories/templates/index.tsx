@@ -1,12 +1,14 @@
 import { notFound } from "next/navigation"
 import { Suspense } from "react"
 
-import InteractiveLink from "@modules/common/components/interactive-link"
+import { categoryCoverUrl } from "@lib/util/catalog"
 import SkeletonProductGrid from "@modules/skeletons/templates/skeleton-product-grid"
 import RefinementList from "@modules/store/components/refinement-list"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
 import PaginatedProducts from "@modules/store/templates/paginated-products"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
+import PhotoFrame from "@modules/common/components/photo-frame"
+import { Text } from "@modules/common/components/ui"
 import { HttpTypes } from "@medusajs/types"
 
 export default function CategoryTemplate({
@@ -36,61 +38,79 @@ export default function CategoryTemplate({
 
   getParents(category)
 
+  const children = category.category_children ?? []
+  const isParentLanding = children.length > 0
+
   return (
     <div
-      className="flex flex-col small:flex-row small:items-start py-6 content-container"
+      className="content-container py-10 small:py-14"
       data-testid="category-container"
     >
-      <RefinementList sortBy={sort} data-testid="sort-by-container" />
-      <div className="w-full">
-        <div className="flex flex-row mb-8 text-2xl-semi gap-4">
-          {parents &&
-            parents.map((parent) => (
-              <span key={parent.id} className="text-ui-fg-subtle">
+      <div className="flex flex-col small:flex-row small:items-start small:gap-12">
+        {!isParentLanding && (
+          <RefinementList sortBy={sort} data-testid="sort-by-container" />
+        )}
+        <div className="w-full min-w-0">
+          <div className="flex flex-wrap items-baseline gap-x-3 gap-y-2 mb-4 text-stone-500">
+            {parents.map((parent) => (
+              <span key={parent.id} className="text-sm">
                 <LocalizedClientLink
-                  className="mr-4 hover:text-black"
+                  className="hover:text-stone-900"
                   href={`/categories/${parent.handle}`}
                   data-testid="sort-by-link"
                 >
                   {parent.name}
                 </LocalizedClientLink>
-                /
+                <span className="mx-2">/</span>
               </span>
             ))}
-          <h1 data-testid="category-page-title">{category.name}</h1>
-        </div>
-        {category.description && (
-          <div className="mb-8 text-base-regular">
-            <p>{category.description}</p>
+            <h1
+              className="text-3xl font-normal text-stone-900"
+              data-testid="category-page-title"
+            >
+              {category.name}
+            </h1>
           </div>
-        )}
-        {category.category_children && (
-          <div className="mb-8 text-base-large">
-            <ul className="grid grid-cols-1 gap-2">
-              {category.category_children?.map((c) => (
-                <li key={c.id}>
-                  <InteractiveLink href={`/categories/${c.handle}`}>
-                    {c.name}
-                  </InteractiveLink>
+          {category.description && (
+            <p className="mb-10 text-stone-600 max-w-2xl">
+              {category.description}
+            </p>
+          )}
+          {isParentLanding ? (
+            <ul className="grid grid-cols-1 small:grid-cols-2 medium:grid-cols-3 gap-x-8 gap-y-10">
+              {children.map((child) => (
+                <li key={child.id}>
+                  <LocalizedClientLink
+                    href={`/categories/${child.handle}`}
+                    className="group block"
+                  >
+                    <PhotoFrame
+                      src={categoryCoverUrl(child)}
+                      alt={child.name}
+                      aspect="sheet"
+                    />
+                    <Text className="text-stone-800 mt-3">{child.name}</Text>
+                  </LocalizedClientLink>
                 </li>
               ))}
             </ul>
-          </div>
-        )}
-        <Suspense
-          fallback={
-            <SkeletonProductGrid
-              numberOfProducts={category.products?.length ?? 8}
-            />
-          }
-        >
-          <PaginatedProducts
-            sortBy={sort}
-            page={pageNumber}
-            categoryId={category.id}
-            countryCode={countryCode}
-          />
-        </Suspense>
+          ) : (
+            <Suspense
+              fallback={
+                <SkeletonProductGrid
+                  numberOfProducts={category.products?.length ?? 8}
+                />
+              }
+            >
+              <PaginatedProducts
+                sortBy={sort}
+                page={pageNumber}
+                categoryId={category.id}
+                countryCode={countryCode}
+              />
+            </Suspense>
+          )}
+        </div>
       </div>
     </div>
   )

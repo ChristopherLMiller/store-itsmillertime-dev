@@ -2,6 +2,7 @@
 
 import { Popover, PopoverPanel, Transition } from "@headlessui/react"
 import useToggleState from "@lib/hooks/use-toggle-state"
+import { galleryHomeUrl, MAIN_SITE_URL, SITE_NAME } from "@lib/util/site"
 import { ArrowRightMini, XMark } from "@medusajs/icons"
 import { HttpTypes } from "@medusajs/types"
 import LocalizedClientLink from "@modules/common/components/localized-client-link"
@@ -11,21 +12,19 @@ import CountrySelect from "../country-select"
 import LanguageSelect from "../language-select"
 import { Locale } from "@lib/data/locales"
 
-
-const SideMenuItems = {
-  Home: "/",
-  Store: "/store",
-  Account: "/account",
-  Cart: "/cart",
-}
-
 type SideMenuProps = {
   regions: HttpTypes.StoreRegion[] | null
   locales: Locale[] | null
   currentLocale: string | null
+  departments: { name: string; handle: string }[]
 }
 
-const SideMenu = ({ regions, locales, currentLocale }: SideMenuProps) => {
+const SideMenu = ({
+  regions,
+  locales,
+  currentLocale,
+  departments,
+}: SideMenuProps) => {
   const countryToggleState = useToggleState()
   const languageToggleState = useToggleState()
 
@@ -62,10 +61,10 @@ const SideMenu = ({ regions, locales, currentLocale }: SideMenuProps) => {
                 leaveFrom="opacity-100 backdrop-blur-2xl"
                 leaveTo="opacity-0"
               >
-                <PopoverPanel className="flex flex-col absolute w-full pr-4 sm:pr-0 sm:w-1/3 2xl:w-1/4 sm:min-w-min h-[calc(100vh-1rem)] z-[51] inset-x-0 text-sm text-ui-fg-on-color m-2 backdrop-blur-2xl">
+                <PopoverPanel className="flex flex-col absolute w-full pr-4 sm:pr-0 sm:w-1/3 2xl:w-1/4 sm:min-w-min h-[calc(100vh-1rem)] z-[51] inset-x-0 text-sm text-stone-800 m-2">
                   <div
                     data-testid="nav-menu-popup"
-                    className="flex flex-col h-full bg-[rgba(3,7,18,0.5)] rounded-rounded justify-between p-6"
+                    className="flex flex-col h-full bg-[#f6f3ef] border border-stone-200 rounded-md justify-between p-6 shadow-lg"
                   >
                     <div className="flex justify-end" id="xmark">
                       <button data-testid="close-menu-button" onClick={close}>
@@ -73,20 +72,68 @@ const SideMenu = ({ regions, locales, currentLocale }: SideMenuProps) => {
                       </button>
                     </div>
                     <ul className="flex flex-col gap-6 items-start justify-start">
-                      {Object.entries(SideMenuItems).map(([name, href]) => {
-                        return (
-                          <li key={name}>
-                            <LocalizedClientLink
-                              href={href}
-                              className="text-3xl leading-10 hover:text-ui-fg-disabled"
-                              onClick={close}
-                              data-testid={`${name.toLowerCase()}-link`}
-                            >
-                              {name}
-                            </LocalizedClientLink>
-                          </li>
-                        )
-                      })}
+                      <li>
+                        <LocalizedClientLink
+                          href="/"
+                          className="text-2xl leading-10 hover:text-stone-500"
+                          onClick={close}
+                          data-testid="home-link"
+                        >
+                          Home
+                        </LocalizedClientLink>
+                      </li>
+                      {departments.map((department) => (
+                        <li key={department.handle}>
+                          <LocalizedClientLink
+                            href={`/categories/${department.handle}`}
+                            className="text-2xl leading-10 hover:text-stone-500"
+                            onClick={close}
+                            data-testid={`${department.handle}-link`}
+                          >
+                            {department.name}
+                          </LocalizedClientLink>
+                        </li>
+                      ))}
+                      <li>
+                        <a
+                          href={galleryHomeUrl()}
+                          className="text-2xl leading-10 hover:text-stone-500"
+                          onClick={close}
+                          data-testid="gallery-link"
+                        >
+                          Gallery
+                        </a>
+                      </li>
+                      <li>
+                        <a
+                          href={MAIN_SITE_URL}
+                          className="text-2xl leading-10 hover:text-stone-500"
+                          onClick={close}
+                          data-testid="main-site-link"
+                        >
+                          Main site
+                        </a>
+                      </li>
+                      <li>
+                        <LocalizedClientLink
+                          href="/account"
+                          className="text-2xl leading-10 hover:text-stone-500"
+                          onClick={close}
+                          data-testid="account-link"
+                        >
+                          Account
+                        </LocalizedClientLink>
+                      </li>
+                      <li>
+                        <LocalizedClientLink
+                          href="/cart"
+                          className="text-2xl leading-10 hover:text-stone-500"
+                          onClick={close}
+                          data-testid="cart-link"
+                        >
+                          Cart
+                        </LocalizedClientLink>
+                      </li>
                     </ul>
                     <div className="flex flex-col gap-y-6">
                       {!!locales?.length && (
@@ -127,7 +174,7 @@ const SideMenu = ({ regions, locales, currentLocale }: SideMenuProps) => {
                         />
                       </div>
                       <Text className="flex justify-between txt-compact-small">
-                        © {new Date().getFullYear()} Medusa Store. All rights
+                        © {new Date().getFullYear()} {SITE_NAME}. All rights
                         reserved.
                       </Text>
                     </div>
