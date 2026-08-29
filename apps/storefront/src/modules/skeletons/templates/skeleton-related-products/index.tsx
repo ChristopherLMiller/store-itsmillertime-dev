@@ -1,7 +1,26 @@
 import repeat from "@lib/util/repeat"
 import SkeletonProductPreview from "@modules/skeletons/components/skeleton-product-preview"
 
-const SkeletonRelatedProducts = () => {
+const SkeletonRelatedProducts = ({
+  layout = "grid",
+}: {
+  layout?: "grid" | "aside"
+}) => {
+  if (layout === "aside") {
+    return (
+      <div>
+        <div className="mb-4 h-4 w-24 animate-pulse bg-paper-dark" />
+        <ul className="grid grid-cols-1 gap-4">
+          {repeat(1).map((index) => (
+            <li key={index}>
+              <SkeletonProductPreview />
+            </li>
+          ))}
+        </ul>
+      </div>
+    )
+  }
+
   return (
     <div className="product-page-constraint">
       <div className="flex flex-col gap-8 items-center text-center mb-8">

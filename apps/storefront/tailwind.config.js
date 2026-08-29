@@ -8,6 +8,7 @@ module.exports = {
     "./src/pages/**/*.{js,ts,jsx,tsx}",
     "./src/components/**/*.{js,ts,jsx,tsx}",
     "./src/modules/**/*.{js,ts,jsx,tsx}",
+    "./src/lib/**/*.{js,ts,jsx,tsx}",
   ],
   theme: {
     extend: {
@@ -20,6 +21,43 @@ module.exports = {
         padding: "padding-top padding-right padding-bottom padding-left",
       },
       colors: {
+        brick: {
+          DEFAULT: "#a13c2e",
+          deep: "#7e2e24",
+          light: "#c96a5a",
+        },
+        bronze: {
+          DEFAULT: "#c4a06a",
+          deep: "#9a7848",
+          pale: "#e4d2ae",
+        },
+        moss: {
+          DEFAULT: "#5a6a52",
+          deep: "#2c352c",
+        },
+        dusk: {
+          DEFAULT: "#3d5558",
+          deep: "#243033",
+        },
+        clay: {
+          DEFAULT: "#8a5a42",
+          deep: "#2c1e18",
+        },
+        night: {
+          DEFAULT: "#161311",
+          soft: "#221c1a",
+        },
+        ink: {
+          DEFAULT: "#161311",
+          soft: "#3d3830",
+          muted: "#6a5e54",
+        },
+        paper: {
+          DEFAULT: "#f6eee6",
+          dark: "#eadfce",
+        },
+        surface: "#fffaf4",
+        cream: "#faf6f1",
         grey: {
           0: "#FFFFFF",
           5: "#F9FAFB",
@@ -59,15 +97,24 @@ module.exports = {
       },
       fontFamily: {
         sans: [
-          "Inter",
+          "var(--font-sans)",
+          "Outfit",
           "-apple-system",
           "BlinkMacSystemFont",
           "Segoe UI",
-          "Roboto",
-          "Helvetica Neue",
-          "Ubuntu",
           "sans-serif",
         ],
+        display: ["var(--font-display)", "Syne", "sans-serif"],
+      },
+      boxShadow: {
+        lift: "0 2px 6px rgba(22, 19, 17, 0.1), 0 16px 40px rgba(22, 19, 17, 0.16)",
+        "lift-md":
+          "0 8px 16px rgba(22, 19, 17, 0.12), 0 28px 56px rgba(22, 19, 17, 0.2)",
+        "lift-lg":
+          "0 16px 32px rgba(22, 19, 17, 0.2), 0 48px 80px rgba(22, 19, 17, 0.32)",
+        shop: "0 12px 40px rgba(22, 19, 17, 0.28)",
+        "shop-lg": "0 24px 60px rgba(22, 19, 17, 0.38)",
+        glow: "0 0 0 1px rgba(196, 160, 106, 0.45), 0 22px 55px rgba(22, 19, 17, 0.4)",
       },
       keyframes: {
         ring: {

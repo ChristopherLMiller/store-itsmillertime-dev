@@ -23,8 +23,12 @@ export default async function Nav() {
 
   return (
     <div className="sticky top-0 inset-x-0 z-50">
-      <header className="relative h-16 mx-auto border-b border-stone-200/80 bg-[#f6f3ef]/90 backdrop-blur-md">
-        <nav className="content-container flex items-center justify-between w-full h-full text-sm text-stone-600">
+      <header className="relative h-16 mx-auto bg-night text-cream shadow-lift">
+        <div
+          aria-hidden
+          className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-bronze to-transparent"
+        />
+        <nav className="content-container flex items-center justify-between w-full h-full text-sm">
           <div className="flex items-center gap-8 h-full min-w-0">
             <div className="h-full small:hidden">
               <SideMenu
@@ -39,16 +43,16 @@ export default async function Nav() {
             </div>
             <LocalizedClientLink
               href="/"
-              className="text-stone-900 tracking-tight hover:text-stone-700 truncate"
+              className="font-display text-lg tracking-tight text-cream hover:text-bronze truncate"
               data-testid="nav-store-link"
             >
               {SITE_NAME}
             </LocalizedClientLink>
-            <div className="hidden small:flex items-center gap-6">
+            <div className="hidden small:flex items-center gap-6 text-cream/65">
               {departments.map((department) => (
                 <LocalizedClientLink
                   key={department.id}
-                  className="hover:text-stone-900"
+                  className="shop-link hover:text-bronze"
                   href={`/categories/${department.handle}`}
                 >
                   {department.name}
@@ -57,22 +61,22 @@ export default async function Nav() {
             </div>
           </div>
 
-          <div className="flex items-center gap-6 h-full">
+          <div className="flex items-center gap-6 h-full text-cream/65">
             <a
-              className="hidden small:inline hover:text-stone-900"
+              className="shop-link hidden small:inline hover:text-bronze"
               href={galleryHomeUrl()}
             >
               Gallery
             </a>
             <a
-              className="hidden small:inline hover:text-stone-900"
+              className="shop-link hidden small:inline hover:text-bronze"
               href={MAIN_SITE_URL}
               data-testid="nav-main-site-link"
             >
               Main site
             </a>
             <LocalizedClientLink
-              className="hidden small:inline hover:text-stone-900"
+              className="shop-link hidden small:inline hover:text-bronze"
               href="/account"
               data-testid="nav-account-link"
             >
@@ -81,7 +85,7 @@ export default async function Nav() {
             <Suspense
               fallback={
                 <LocalizedClientLink
-                  className="hover:text-stone-900"
+                  className="hover:text-bronze"
                   href="/cart"
                   data-testid="nav-cart-link"
                 >

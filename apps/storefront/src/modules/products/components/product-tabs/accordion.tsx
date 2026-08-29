@@ -47,7 +47,7 @@ const Item: React.FC<AccordionItemProps> = ({
     <AccordionPrimitive.Item
       {...props}
       className={clx(
-        "border-grey-20 group border-t last:mb-0 last:border-b",
+        "border-black/10 group border-t last:mb-0 last:border-b",
         "py-3",
         className
       )}
@@ -56,7 +56,7 @@ const Item: React.FC<AccordionItemProps> = ({
         <div className="flex flex-col">
           <div className="flex w-full items-center justify-between">
             <div className="flex items-center gap-4">
-              <Text className="text-ui-fg-subtle text-sm">{title}</Text>
+            <Text className="text-ink-muted text-sm">{title}</Text>
             </div>
             <AccordionPrimitive.Trigger>
               {customTrigger || <MorphingTrigger />}

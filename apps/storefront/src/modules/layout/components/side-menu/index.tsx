@@ -37,7 +37,7 @@ const SideMenu = ({
               <div className="relative flex h-full">
                 <Popover.Button
                   data-testid="nav-menu-button"
-                  className="relative h-full flex items-center transition-all ease-out duration-200 focus:outline-none hover:text-ui-fg-base"
+                  className="relative h-full flex items-center text-cream/65 hover:text-bronze transition-all ease-out duration-200 focus:outline-none"
                 >
                   Menu
                 </Popover.Button>
@@ -61,13 +61,13 @@ const SideMenu = ({
                 leaveFrom="opacity-100 backdrop-blur-2xl"
                 leaveTo="opacity-0"
               >
-                <PopoverPanel className="flex flex-col absolute w-full pr-4 sm:pr-0 sm:w-1/3 2xl:w-1/4 sm:min-w-min h-[calc(100vh-1rem)] z-[51] inset-x-0 text-sm text-stone-800 m-2">
+                <PopoverPanel className="flex flex-col absolute w-full pr-4 sm:pr-0 sm:w-1/3 2xl:w-1/4 sm:min-w-min h-[calc(100vh-1rem)] z-[51] inset-x-0 text-sm text-cream m-2">
                   <div
                     data-testid="nav-menu-popup"
-                    className="flex flex-col h-full bg-[#f6f3ef] border border-stone-200 rounded-md justify-between p-6 shadow-lg"
+                    className="flex flex-col h-full bg-night border border-bronze/30 rounded-sm justify-between p-6 shadow-lift-lg"
                   >
                     <div className="flex justify-end" id="xmark">
-                      <button data-testid="close-menu-button" onClick={close}>
+                      <button data-testid="close-menu-button" onClick={close} className="text-cream">
                         <XMark />
                       </button>
                     </div>
@@ -75,7 +75,7 @@ const SideMenu = ({
                       <li>
                         <LocalizedClientLink
                           href="/"
-                          className="text-2xl leading-10 hover:text-stone-500"
+                          className="font-display text-2xl leading-10 tracking-tight hover:text-bronze"
                           onClick={close}
                           data-testid="home-link"
                         >
@@ -86,7 +86,7 @@ const SideMenu = ({
                         <li key={department.handle}>
                           <LocalizedClientLink
                             href={`/categories/${department.handle}`}
-                            className="text-2xl leading-10 hover:text-stone-500"
+                            className="font-display text-2xl leading-10 tracking-tight hover:text-bronze"
                             onClick={close}
                             data-testid={`${department.handle}-link`}
                           >
@@ -97,7 +97,7 @@ const SideMenu = ({
                       <li>
                         <a
                           href={galleryHomeUrl()}
-                          className="text-2xl leading-10 hover:text-stone-500"
+                          className="font-display text-2xl leading-10 tracking-tight hover:text-bronze"
                           onClick={close}
                           data-testid="gallery-link"
                         >
@@ -107,7 +107,7 @@ const SideMenu = ({
                       <li>
                         <a
                           href={MAIN_SITE_URL}
-                          className="text-2xl leading-10 hover:text-stone-500"
+                          className="font-display text-2xl leading-10 tracking-tight hover:text-bronze"
                           onClick={close}
                           data-testid="main-site-link"
                         >
@@ -117,7 +117,7 @@ const SideMenu = ({
                       <li>
                         <LocalizedClientLink
                           href="/account"
-                          className="text-2xl leading-10 hover:text-stone-500"
+                          className="font-display text-2xl leading-10 tracking-tight hover:text-bronze"
                           onClick={close}
                           data-testid="account-link"
                         >
@@ -127,7 +127,7 @@ const SideMenu = ({
                       <li>
                         <LocalizedClientLink
                           href="/cart"
-                          className="text-2xl leading-10 hover:text-stone-500"
+                          className="font-display text-2xl leading-10 tracking-tight hover:text-bronze"
                           onClick={close}
                           data-testid="cart-link"
                         >

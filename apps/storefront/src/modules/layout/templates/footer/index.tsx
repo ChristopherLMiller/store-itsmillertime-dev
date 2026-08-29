@@ -1,51 +1,53 @@
-import { listCategories } from "@lib/data/categories";
-import { listCollections } from "@lib/data/collections";
-import { getDepartmentCategories } from "@lib/util/catalog";
+import { listCategories } from "@lib/data/categories"
+import { listCollections } from "@lib/data/collections"
+import { getDepartmentCategories } from "@lib/util/catalog"
 import {
   galleryHomeUrl,
   MAIN_SITE_URL,
   SITE_NAME,
-} from "@lib/util/site";
-import { Text, clx } from "@modules/common/components/ui";
+} from "@lib/util/site"
+import { Text } from "@modules/common/components/ui"
 
-import LocalizedClientLink from "@modules/common/components/localized-client-link";
+import LocalizedClientLink from "@modules/common/components/localized-client-link"
 
 export default async function Footer() {
   const { collections } = await listCollections({
     fields: "*products",
-  });
-  const productCategories = await listCategories();
-  const departments = getDepartmentCategories(productCategories);
+  })
+  const productCategories = await listCategories()
+  const departments = getDepartmentCategories(productCategories)
 
   return (
-    <footer className="border-t border-stone-200 w-full">
+    <footer className="mt-16 w-full bg-night text-cream/55">
+      <div
+        aria-hidden
+        className="h-px bg-gradient-to-r from-transparent via-bronze to-transparent"
+      />
       <div className="content-container flex flex-col w-full">
-        <div className="flex flex-col gap-y-10 xsmall:flex-row items-start justify-between py-16 small:py-24">
-          <div>
+        <div className="flex flex-col gap-y-10 xsmall:flex-row items-start justify-between py-16 small:py-20">
+          <div className="max-w-sm">
             <LocalizedClientLink
               href="/"
-              className="text-stone-900 hover:text-stone-600"
+              className="font-display text-2xl tracking-tight text-cream hover:text-bronze"
             >
               {SITE_NAME}
             </LocalizedClientLink>
+            <p className="mt-3 text-sm leading-relaxed">
+              A shop next to the gallery — prints, games, and studio work.
+            </p>
           </div>
           <div className="text-small-regular gap-10 md:gap-x-16 grid grid-cols-2 sm:grid-cols-3">
             {departments.length > 0 && (
-              <div className="flex flex-col gap-y-2">
-                <span className="txt-small-plus txt-ui-fg-base">
-                  Shop
-                </span>
+              <div className="flex flex-col gap-y-3">
+                <span className="text-bronze">Shop</span>
                 <ul
                   className="grid grid-cols-1 gap-2"
                   data-testid="footer-categories"
                 >
                   {departments.map((department) => (
-                    <li
-                      className="flex flex-col gap-2 text-ui-fg-subtle txt-small"
-                      key={department.id}
-                    >
+                    <li key={department.id}>
                       <LocalizedClientLink
-                        className="hover:text-ui-fg-base"
+                        className="shop-link hover:text-bronze"
                         href={`/categories/${department.handle}`}
                         data-testid="category-link"
                       >
@@ -57,22 +59,13 @@ export default async function Footer() {
               </div>
             )}
             {collections && collections.length > 0 && (
-              <div className="flex flex-col gap-y-2">
-                <span className="txt-small-plus txt-ui-fg-base">
-                  Collections
-                </span>
-                <ul
-                  className={clx(
-                    "grid grid-cols-1 gap-2 text-ui-fg-subtle txt-small",
-                    {
-                      "grid-cols-2": (collections?.length || 0) > 3,
-                    }
-                  )}
-                >
+              <div className="flex flex-col gap-y-3">
+                <span className="text-bronze">Collections</span>
+                <ul className="grid grid-cols-1 gap-2">
                   {collections?.slice(0, 6).map((c) => (
                     <li key={c.id}>
                       <LocalizedClientLink
-                        className="hover:text-ui-fg-base"
+                        className="shop-link hover:text-bronze"
                         href={`/collections/${c.handle}`}
                       >
                         {c.title}
@@ -82,22 +75,16 @@ export default async function Footer() {
                 </ul>
               </div>
             )}
-            <div className="flex flex-col gap-y-2">
-              <span className="text-sm text-stone-900">ItsMillerTime</span>
-              <ul className="grid grid-cols-1 gap-y-2 text-ui-fg-subtle txt-small">
+            <div className="flex flex-col gap-y-3">
+              <span className="text-bronze">ItsMillerTime</span>
+              <ul className="grid grid-cols-1 gap-y-2">
                 <li>
-                  <a
-                    href={MAIN_SITE_URL}
-                    className="hover:text-ui-fg-base"
-                  >
+                  <a href={MAIN_SITE_URL} className="shop-link hover:text-bronze">
                     Main site
                   </a>
                 </li>
                 <li>
-                  <a
-                    href={galleryHomeUrl()}
-                    className="hover:text-ui-fg-base"
-                  >
+                  <a href={galleryHomeUrl()} className="shop-link hover:text-bronze">
                     Gallery
                   </a>
                 </li>
@@ -105,12 +92,12 @@ export default async function Footer() {
             </div>
           </div>
         </div>
-        <div className="flex w-full mb-16 justify-between text-ui-fg-muted">
+        <div className="flex w-full mb-10 justify-between border-t border-bronze/20 pt-6">
           <Text className="txt-compact-small">
             © {new Date().getFullYear()} {SITE_NAME}. All rights reserved.
           </Text>
         </div>
       </div>
     </footer>
-  );
+  )
 }

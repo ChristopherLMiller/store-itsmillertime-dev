@@ -91,7 +91,7 @@ const MobileActions: React.FC<MobileActionsProps> = ({
           leaveTo="opacity-0"
         >
           <div
-            className="bg-[#f6f3ef] flex flex-col gap-y-3 justify-center items-center text-large-regular p-4 h-full w-full border-t border-stone-200"
+            className="bg-paper flex flex-col gap-y-3 justify-center items-center text-large-regular p-4 h-full w-full border-t border-black/10"
             data-testid="mobile-actions"
           >
             <div className="flex items-center gap-x-2">
@@ -197,7 +197,7 @@ const MobileActions: React.FC<MobileActionsProps> = ({
                       <X />
                     </button>
                   </div>
-                  <div className="bg-[#f6f3ef] px-6 py-10 max-h-[80vh] overflow-y-auto">
+                  <div className="bg-surface px-6 py-10 max-h-[80vh] overflow-y-auto">
                     {(product.variants?.length ?? 0) > 1 &&
                       (printProduct ? (
                         <PrintOptions

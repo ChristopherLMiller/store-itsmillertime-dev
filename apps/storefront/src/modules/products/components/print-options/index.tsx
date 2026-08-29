@@ -58,9 +58,7 @@ const PrintOptions = ({
     <div className="flex flex-col gap-8">
       {paperOption && (
         <fieldset disabled={disabled} className="min-w-0">
-          <legend className="text-sm font-medium text-stone-800 mb-3">
-            Paper
-          </legend>
+          <legend className="text-sm text-ink-muted mb-3">Paper</legend>
           <div className="flex flex-col gap-2">
             {paperValues.map((value) => {
               const presented = paperPresentation(value)
@@ -71,18 +69,18 @@ const PrintOptions = ({
                   type="button"
                   onClick={() => updateOption(paperOption.id, value)}
                   className={clx(
-                    "text-left rounded-md border px-3 py-3 transition-colors",
+                    "text-left rounded-sm border px-3 py-3 transition-colors duration-300",
                     selected
-                      ? "border-stone-900 bg-white"
-                      : "border-stone-200 bg-white/60 hover:border-stone-400"
+                      ? "border-ink bg-night"
+                      : "border-black/15 bg-transparent hover:border-ink/40"
                   )}
                   data-testid="paper-option"
                 >
-                  <span className="block text-sm text-stone-900">
+                  <span className={clx("block text-sm", selected ? "text-cream" : "text-ink")}>
                     {presented.name}
                   </span>
                   {presented.hint && (
-                    <span className="block text-xs text-stone-500 mt-0.5">
+                    <span className={clx("block text-xs mt-0.5", selected ? "text-cream/65" : "text-ink-muted")}>
                       {presented.hint}
                     </span>
                   )}
@@ -95,9 +93,7 @@ const PrintOptions = ({
 
       {formatOption && !digitalSelected && formatValues.length > 0 && (
         <fieldset disabled={disabled} className="min-w-0">
-          <legend className="text-sm font-medium text-stone-800 mb-3">
-            Size
-          </legend>
+          <legend className="text-sm text-ink-muted mb-3">Size</legend>
           <div className="grid grid-cols-3 gap-2 max-h-[22rem] overflow-y-auto pr-1">
             {formatValues.map((value) => {
               const selected = value === selectedFormat
@@ -117,23 +113,33 @@ const PrintOptions = ({
                   type="button"
                   onClick={() => updateOption(formatOption.id, value)}
                   className={clx(
-                    "flex flex-col items-center gap-2 rounded-md border px-2 py-3 transition-colors",
+                    "flex flex-col items-center gap-2 rounded-sm border px-2 py-3 transition-colors duration-300",
                     selected
-                      ? "border-stone-900 bg-white"
-                      : "border-stone-200 bg-white/60 hover:border-stone-400"
+                      ? "border-ink bg-night text-cream"
+                      : "border-black/15 bg-transparent hover:border-ink/40"
                   )}
                   data-testid="format-option"
                 >
                   <span
-                    className="w-10 max-w-full border border-stone-400/80 bg-stone-100"
+                    className={clx(
+                      "w-10 max-w-full border",
+                      selected
+                        ? "border-cream/30 bg-cream/15"
+                        : "border-black/15 bg-paper-dark"
+                    )}
                     style={tileAspectStyle(value, photoOrientation)}
                     aria-hidden
                   />
-                  <span className="text-xs text-stone-900 leading-tight">
+                  <span className="text-xs leading-tight">
                     {formatSizeLabel(value)}
                   </span>
                   {price && (
-                    <span className="text-[11px] text-stone-500">
+                    <span
+                      className={clx(
+                        "text-[11px]",
+                        selected ? "text-cream/65" : "text-ink-muted"
+                      )}
+                    >
                       {price.calculated_price}
                     </span>
                   )}
@@ -146,9 +152,7 @@ const PrintOptions = ({
 
       {finishOption && showFinishPicker && (
         <fieldset disabled={disabled} className="min-w-0">
-          <legend className="text-sm font-medium text-stone-800 mb-3">
-            Finish
-          </legend>
+          <legend className="text-sm text-ink-muted mb-3">Finish</legend>
           <div className="flex flex-wrap gap-2">
             {finishValues.map((value) => {
               const selected = value === selectedFinish
@@ -158,10 +162,10 @@ const PrintOptions = ({
                   type="button"
                   onClick={() => updateOption(finishOption.id, value)}
                   className={clx(
-                    "rounded-full border px-3 py-1.5 text-sm capitalize transition-colors",
+                    "rounded-sm border px-3 py-1.5 text-sm capitalize transition-colors duration-300",
                     selected
-                      ? "border-stone-900 bg-stone-900 text-white"
-                      : "border-stone-200 bg-white hover:border-stone-400"
+                      ? "border-ink bg-night text-cream"
+                      : "border-black/15 bg-transparent hover:border-ink/40"
                   )}
                   data-testid="finish-option"
                 >

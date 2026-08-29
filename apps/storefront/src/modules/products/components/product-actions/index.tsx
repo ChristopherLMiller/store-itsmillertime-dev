@@ -311,12 +311,14 @@ export default function ProductActions({
             !isValidVariant
           }
           variant="primary"
-          className="w-full h-12 rounded-md"
+          className="w-full h-12 rounded-sm"
           isLoading={isAdding}
           data-testid="add-product-button"
         >
-          {!selectedVariant
-            ? "Select a size"
+            {!selectedVariant
+            ? printProduct
+              ? "Select a size"
+              : "Select an option"
             : !inStock || !isValidVariant
             ? "Out of stock"
             : "Add to cart"}

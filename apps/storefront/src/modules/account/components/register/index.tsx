@@ -17,28 +17,25 @@ const Register = ({ setCurrentView }: Props) => {
   const [message, formAction] = useActionState(signup, null)
 
   return (
-    <div
-      className="max-w-sm flex flex-col items-center"
-      data-testid="register-page"
-    >
-      <h1 className="text-large-semi uppercase mb-6">
-        Become an {SITE_NAME} member
+    <div className="w-full flex flex-col" data-testid="register-page">
+      <p className="shop-kicker">Account</p>
+      <h1 className="mt-2 font-display text-3xl tracking-tight text-ink">
+        Create an account
       </h1>
-      <p className="text-center text-base-regular text-ui-fg-base mb-4">
-        Create your {SITE_NAME} profile, and get access to an enhanced
-        shopping experience.
+      <p className="mt-3 text-sm leading-relaxed text-ink-muted">
+        Save addresses and check on orders at {SITE_NAME}.
       </p>
       {message?.state === "verification_required" && (
         <div
-          className="w-full mb-4 text-center text-base-regular text-ui-fg-base bg-ui-bg-subtle border border-ui-border-base rounded-rounded p-4"
+          className="w-full mt-6 text-sm leading-relaxed text-ink bg-paper border border-bronze/25 p-4"
           data-testid="register-verification-message"
         >
           We sent a verification link to <strong>{message.email}</strong>.
           Please check your inbox to verify your email, then sign in.
         </div>
       )}
-      <form className="w-full flex flex-col" action={formAction}>
-        <div className="flex flex-col w-full gap-y-2">
+      <form className="w-full flex flex-col mt-8" action={formAction}>
+        <div className="flex flex-col w-full gap-4">
           <Input
             label="First name"
             name="first_name"
@@ -81,37 +78,36 @@ const Register = ({ setCurrentView }: Props) => {
           error={message?.state === "error" ? message.error : null}
           data-testid="register-error"
         />
-        <span className="text-center text-ui-fg-base text-small-regular mt-6">
+        <p className="text-center text-xs leading-relaxed text-ink-muted mt-6">
           By creating an account, you agree to {SITE_NAME}&apos;s{" "}
           <LocalizedClientLink
             href="/content/privacy-policy"
-            className="underline"
+            className="shop-link text-bronze hover:text-bronze-deep"
           >
             Privacy Policy
           </LocalizedClientLink>{" "}
           and{" "}
           <LocalizedClientLink
             href="/content/terms-of-use"
-            className="underline"
+            className="shop-link text-bronze hover:text-bronze-deep"
           >
             Terms of Use
           </LocalizedClientLink>
           .
-        </span>
-        <SubmitButton className="w-full mt-6" data-testid="register-button">
+        </p>
+        <SubmitButton className="w-full mt-6 h-11" data-testid="register-button">
           Join
         </SubmitButton>
       </form>
-      <span className="text-center text-ui-fg-base text-small-regular mt-6">
+      <p className="text-center text-sm text-ink-muted mt-8">
         Already a member?{" "}
         <button
           onClick={() => setCurrentView(LOGIN_VIEW.SIGN_IN)}
-          className="underline"
+          className="shop-link text-bronze hover:text-bronze-deep"
         >
           Sign in
         </button>
-        .
-      </span>
+      </p>
     </div>
   )
 }

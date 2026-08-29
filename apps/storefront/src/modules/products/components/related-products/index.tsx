@@ -1,16 +1,19 @@
 import { listProducts } from "@lib/data/products"
 import { getRegion } from "@lib/data/regions"
 import { HttpTypes } from "@medusajs/types"
+import Reveal from "@modules/common/components/reveal"
 import Product from "../product-preview"
 
 type RelatedProductsProps = {
   product: HttpTypes.StoreProduct
   countryCode: string
+  layout?: "grid" | "aside"
 }
 
 export default async function RelatedProducts({
   product,
   countryCode,
+  layout = "grid",
 }: RelatedProductsProps) {
   const region = await getRegion(countryCode)
 
@@ -54,18 +57,27 @@ export default async function RelatedProducts({
     return null
   }
 
+  const aside = layout === "aside"
+  const shown = aside ? products.slice(0, 2) : products
+
   return (
     <div>
-      <div className="flex flex-col mb-10">
-        <span className="text-sm uppercase tracking-[0.18em] text-stone-500 mb-2">
-          More like this
-        </span>
+      <div className={aside ? "mb-4" : "flex flex-col mb-10"}>
+        <span className="text-sm text-ink-muted">More like this</span>
       </div>
 
-      <ul className="grid grid-cols-1 small:grid-cols-2 medium:grid-cols-3 gap-x-8 gap-y-10">
-        {products.map((relatedProduct) => (
+      <ul
+        className={
+          aside
+            ? "grid grid-cols-1 gap-4"
+            : "grid grid-cols-1 small:grid-cols-2 medium:grid-cols-3 gap-x-8 gap-y-6"
+        }
+      >
+        {shown.map((relatedProduct, index) => (
           <li key={relatedProduct.id}>
-            <Product region={region} product={relatedProduct} />
+            <Reveal delay={Math.min(index, 5) * 70}>
+              <Product region={region} product={relatedProduct} />
+            </Reveal>
           </li>
         ))}
       </ul>

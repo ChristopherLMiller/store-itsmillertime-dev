@@ -29,6 +29,7 @@ export default async function PageLayout(props: { children: React.ReactNode }) {
   return (
     <>
       <SandboxModeBanner />
+
       <Nav />
       {customer && cart && (
         <CartMismatchBanner customer={customer} cart={cart} />

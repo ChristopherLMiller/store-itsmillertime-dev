@@ -2,8 +2,20 @@
 @import "tailwindcss/components";
 @import "tailwindcss/utilities";
 
+:root {
+  --shop-paper: #f6eee6;
+  --shop-surface: #fffaf4;
+  --shop-line: rgba(22, 19, 17, 0.12);
+  --shop-ink: #161311;
+  --shop-muted: #6a5e54;
+  --shop-brick: #a13c2e;
+  --shop-bronze: #c4a06a;
+  --shop-moss: #5a6a52;
+  --shop-dusk: #3d5558;
+  --shop-night: #161311;
+}
+
 @layer utilities {
-  /* Chrome, Safari and Opera */
   .no-scrollbar::-webkit-scrollbar {
     display: none;
   }
@@ -13,8 +25,8 @@
   }
 
   .no-scrollbar {
-    -ms-overflow-style: none; /* IE and Edge */
-    scrollbar-width: none; /* Firefox */
+    -ms-overflow-style: none;
+    scrollbar-width: none;
   }
 
   input:focus ~ label,
@@ -35,9 +47,9 @@
   select:-webkit-autofill,
   select:-webkit-autofill:hover,
   select:-webkit-autofill:focus {
-    border: 1px solid #212121;
-    -webkit-text-fill-color: #212121;
-    -webkit-box-shadow: 0 0 0px 1000px #fff inset;
+    border: 1px solid #c4a06a;
+    -webkit-text-fill-color: #161311;
+    -webkit-box-shadow: 0 0 0px 1000px #fffaf4 inset;
     transition: background-color 5000s ease-in-out 0s;
   }
 
@@ -49,13 +61,142 @@
   }
 }
 
+@layer base {
+  html {
+    color-scheme: light;
+    scrollbar-color: #c4a06a #eadfce;
+    scrollbar-width: thin;
+  }
+
+  body {
+    background-color: var(--shop-paper);
+    background-image:
+      radial-gradient(ellipse 80% 55% at 0% -10%, rgba(196, 160, 106, 0.18), transparent 55%),
+      radial-gradient(ellipse 55% 40% at 100% 8%, rgba(161, 60, 46, 0.08), transparent 50%),
+      radial-gradient(ellipse 50% 35% at 90% 100%, rgba(90, 106, 82, 0.1), transparent 50%);
+    color: var(--shop-ink);
+  }
+
+  a {
+    color: inherit;
+  }
+}
+
 @layer components {
   .content-container {
     @apply max-w-[1440px] w-full mx-auto px-6;
   }
 
+  .shop-panel {
+    @apply bg-surface border border-bronze/25 shadow-lift;
+  }
+
+  .shop-kicker {
+    @apply text-xs tracking-wide text-bronze-deep;
+  }
+
+  .shop-lift {
+    @apply shadow-lift transition-[transform,box-shadow] duration-500 ease-out;
+  }
+
+  .shop-lift:hover {
+    @apply -translate-y-1 shadow-lift-md;
+  }
+
+  .shop-link {
+    @apply relative transition-colors duration-300;
+  }
+
+  .shop-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: -0.2em;
+    height: 1px;
+    background: currentColor;
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 0.4s cubic-bezier(0.22, 1, 0.36, 1);
+  }
+
+  .shop-link:hover::after {
+    transform: scaleX(1);
+  }
+
+  .shop-fade-up {
+    animation: shop-fade-up 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  .shop-kenburns {
+    animation: shop-kenburns 28s ease-in-out infinite alternate;
+  }
+
+  .shop-drift {
+    animation: shop-drift 18s ease-in-out infinite;
+  }
+
+  .shop-rule {
+    transform-origin: left;
+    animation: shop-rule 0.8s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes shop-fade-up {
+    from {
+      opacity: 0;
+      transform: translateY(18px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes shop-kenburns {
+    from {
+      transform: scale(1);
+    }
+    to {
+      transform: scale(1.07);
+    }
+  }
+
+  @keyframes shop-drift {
+    0%,
+    100% {
+      transform: translate(0, 0);
+    }
+    50% {
+      transform: translate(-28px, 18px);
+    }
+  }
+
+  @keyframes shop-rule {
+    from {
+      transform: scaleX(0);
+      opacity: 0;
+    }
+    to {
+      transform: scaleX(1);
+      opacity: 1;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .shop-fade-up,
+    .shop-kenburns,
+    .shop-drift,
+    .shop-rule,
+    .shop-lift {
+      animation: none !important;
+      transition: none !important;
+      opacity: 1 !important;
+      transform: none !important;
+    }
+  }
+
   .contrast-btn {
-    @apply px-4 py-2 border border-black rounded-full hover:bg-black hover:text-white transition-colors duration-200 ease-in;
+    @apply px-4 py-2 border border-bronze/40 rounded-sm hover:bg-night hover:text-cream transition-colors duration-200 ease-in;
   }
 
   .text-xsmall-regular {

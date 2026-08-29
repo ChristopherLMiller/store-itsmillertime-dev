@@ -9,11 +9,11 @@ import { HttpTypes } from "@medusajs/types"
 const CheckoutSummary = ({ cart }: { cart: HttpTypes.StoreCart }) => {
   return (
     <div className="sticky top-0 flex flex-col-reverse small:flex-col gap-y-8 py-8 small:py-0 ">
-      <div className="w-full bg-white flex flex-col">
+      <div className="w-full shop-panel flex flex-col p-6">
         <Divider className="my-6 small:hidden" />
         <Heading
           level="h2"
-          className="flex flex-row text-3xl-regular items-baseline"
+          className="font-display text-3xl tracking-tight items-baseline"
         >
           In your Cart
         </Heading>

@@ -25,7 +25,7 @@ export default async function SandboxModeBanner() {
 
   return (
     <div
-      className="bg-amber-200 px-4 py-2 text-center text-sm text-amber-950"
+      className="bg-yellow-400 px-4 py-3 text-center text-sm font-semibold text-night"
       data-testid="sandbox-mode-banner"
     >
       {bannerCopy(status)}

@@ -18,15 +18,15 @@ export default function ProductPrice({
   const selectedPrice = variant ? variantPrice : cheapestPrice
 
   if (!selectedPrice) {
-    return <div className="block w-32 h-9 bg-gray-100 animate-pulse" />
+    return <div className="block w-32 h-9 bg-surface animate-pulse" />
   }
 
   return (
-    <div className="flex flex-col text-stone-900">
+    <div className="flex flex-col text-ink">
       <span
-        className={clx("text-2xl font-normal", {
-          "text-stone-900": selectedPrice.price_type !== "sale",
-          "text-red-800": selectedPrice.price_type === "sale",
+        className={clx("font-display text-3xl font-medium tracking-tight", {
+          "text-ink": selectedPrice.price_type !== "sale",
+          "text-brick": selectedPrice.price_type === "sale",
         })}
       >
         {!variant && "From "}

@@ -10,7 +10,7 @@ export const DEPARTMENT_CATEGORIES = [
   {
     handle: "board-games",
     name: "Board Games",
-    description: "Games I've designed.",
+    description: "Pre-loved games, listed the way a shop should.",
     rank: 1,
   },
   {

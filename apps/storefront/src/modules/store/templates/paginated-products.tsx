@@ -3,6 +3,8 @@ import { getRegion } from "@lib/data/regions"
 import ProductPreview from "@modules/products/components/product-preview"
 import { Pagination } from "@modules/store/components/pagination"
 import { SortOptions } from "@modules/store/components/refinement-list/sort-products"
+import { clx } from "@modules/common/components/ui"
+import Reveal from "@modules/common/components/reveal"
 
 const PRODUCT_LIMIT = 12
 
@@ -21,6 +23,7 @@ export default async function PaginatedProducts({
   categoryId,
   productsIds,
   countryCode,
+  listing = "shop",
 }: {
   sortBy?: SortOptions
   page: number
@@ -28,6 +31,7 @@ export default async function PaginatedProducts({
   categoryId?: string
   productsIds?: string[]
   countryCode: string
+  listing?: "gallery" | "shop"
 }) {
   const queryParams: PaginatedProductsParams = {
     limit: 12,
@@ -69,18 +73,27 @@ export default async function PaginatedProducts({
   return (
     <>
       {products.length === 0 ? (
-        <p className="text-stone-500 text-base-regular">
-          Nothing listed here yet.
+        <p className="text-ink-muted text-base-regular">
+          {listing === "gallery"
+            ? "No photos in this album yet."
+            : "Nothing listed here yet. Check back soon."}
         </p>
       ) : (
         <ul
-          className="grid grid-cols-1 w-full small:grid-cols-2 medium:grid-cols-3 gap-x-8 gap-y-10"
+          className={clx(
+            "grid grid-cols-1 w-full gap-x-6 gap-y-10",
+            listing === "gallery"
+              ? "small:grid-cols-2 medium:grid-cols-3 gap-y-6"
+              : "small:grid-cols-2 medium:grid-cols-3 gap-y-10"
+          )}
           data-testid="products-list"
         >
-          {products.map((p) => {
+          {products.map((p, index) => {
             return (
               <li key={p.id}>
-                <ProductPreview product={p} region={region} />
+                <Reveal delay={Math.min(index, 5) * 70}>
+                  <ProductPreview product={p} region={region} />
+                </Reveal>
               </li>
             )
           })}

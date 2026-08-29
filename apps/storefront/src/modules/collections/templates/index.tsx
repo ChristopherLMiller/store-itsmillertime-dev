@@ -25,7 +25,7 @@ export default function CollectionTemplate({
       <RefinementList sortBy={sort} />
       <div className="w-full">
         <div className="mb-8">
-          <h1 className="text-3xl font-normal text-stone-900">{collection.title}</h1>
+          <h1 className="font-display text-3xl small:text-4xl tracking-tight text-ink">{collection.title}</h1>
         </div>
         <Suspense
           fallback={

@@ -42,7 +42,6 @@ export const Heading = forwardRef<HTMLHeadingElement, HeadingProps>(
       <Component
         ref={ref}
         className={clsx(
-          "font-semibold",
           Component === "h1" && "text-3xl",
           Component === "h2" && "text-2xl",
           Component === "h3" && "text-xl",
@@ -82,11 +81,13 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
         ref={ref}
         disabled={disabled || isLoading}
         className={clsx(
-          "inline-flex gap-2 items-center justify-center rounded-md font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50",
-          variant === "primary" && "bg-black text-white hover:bg-gray-800",
+          "inline-flex gap-2 items-center justify-center rounded-sm font-medium transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-bronze focus-visible:ring-offset-2 focus-visible:ring-offset-paper disabled:pointer-events-none disabled:opacity-50",
+          variant === "primary" &&
+            "bg-brick text-cream shadow-lift hover:bg-brick-deep hover:shadow-lift-md hover:-translate-y-0.5",
           variant === "secondary" &&
-            "bg-white text-black border border-gray-200 hover:bg-gray-50",
-          variant === "transparent" && "bg-transparent hover:bg-gray-100",
+            "bg-surface text-ink border border-bronze/30 shadow-lift hover:border-bronze hover:bg-paper",
+          variant === "transparent" &&
+            "bg-transparent text-ink hover:bg-black/5",
           size === "small" && "h-8 px-3 text-sm",
           size === "medium" && "h-10 px-4",
           size === "large" && "h-12 px-6 text-lg",
@@ -109,7 +110,7 @@ export const Container = forwardRef<HTMLDivElement, ContainerProps>(
     return (
       <div
         ref={ref}
-        className={clsx("bg-white rounded-lg p-4", className)}
+        className={clsx("bg-surface rounded-sm p-4", className)}
         {...props}
       >
         {children}

@@ -1,110 +1,74 @@
-"use client"
+import { Heading, Text } from "@modules/common/components/ui"
 
-import FastDelivery from "@modules/common/icons/fast-delivery"
-
-import Accordion from "./accordion"
-import { HttpTypes } from "@medusajs/types"
+const PRODIGI_URL = "https://www.prodigi.com"
 
 type ProductTabsProps = {
-  product: HttpTypes.StoreProduct
   printProduct?: boolean
 }
 
-const ProductTabs = ({ product, printProduct }: ProductTabsProps) => {
-  const tabs = printProduct
-    ? [
-        {
-          label: "Printing & shipping",
-          component: <PrintShippingTab />,
-        },
-      ]
-    : [
-        {
-          label: "Product Information",
-          component: <ProductInfoTab product={product} />,
-        },
-        {
-          label: "Shipping & Returns",
-          component: <ShippingInfoTab />,
-        },
-      ]
-
+const ProductTabs = ({ printProduct }: ProductTabsProps) => {
   return (
-    <div className="w-full border-t border-stone-200 pt-2">
-      <Accordion type="multiple">
-        {tabs.map((tab, i) => (
-          <Accordion.Item
-            key={i}
-            title={tab.label}
-            headingSize="medium"
-            value={tab.label}
-          >
-            {tab.component}
-          </Accordion.Item>
-        ))}
-      </Accordion>
+    <div className="shop-panel p-6">
+      {printProduct ? <PrintShippingCopy /> : <ShopShippingCopy />}
     </div>
   )
 }
 
-const ProductInfoTab = ({ product }: ProductTabsProps) => {
+const PrintShippingCopy = () => {
   return (
-    <div className="text-small-regular py-6">
-      <div className="grid grid-cols-2 gap-x-8">
-        <div className="flex flex-col gap-y-4">
-          <div>
-            <span className="font-semibold">Material</span>
-            <p>{product.material ? product.material : "-"}</p>
-          </div>
-          <div>
-            <span className="font-semibold">Type</span>
-            <p>{product.type ? product.type.value : "-"}</p>
-          </div>
-        </div>
-        <div className="flex flex-col gap-y-4">
-          <div>
-            <span className="font-semibold">Weight</span>
-            <p>{product.weight ? `${product.weight} g` : "-"}</p>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const PrintShippingTab = () => {
-  return (
-    <div className="text-small-regular py-6 text-stone-600">
-      <div className="flex items-start gap-x-2">
-        <FastDelivery />
-        <div className="flex flex-col gap-3 max-w-sm">
-          <p>
-            Physical prints are made to order and typically ship within 5–10
-            business days. Digital downloads are available immediately after
-            checkout.
-          </p>
-          <p>
-            Sizes follow the photo’s orientation — landscape images print
-            landscape, even when the listed size is written as 8 × 10.
-          </p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
-const ShippingInfoTab = () => {
-  return (
-    <div className="text-small-regular py-6">
-      <div className="flex items-start gap-x-2">
-        <FastDelivery />
+    <div>
+      <Heading
+        level="h2"
+        className="font-display text-xl tracking-tight text-ink"
+      >
+        Printing & shipping
+      </Heading>
+      <div className="mt-5 grid grid-cols-1 small:grid-cols-3 gap-6 small:gap-8">
         <div>
-          <span className="font-semibold">Shipping</span>
-          <p className="max-w-sm text-stone-600">
-            Made to order. Most items ship within 5–10 business days.
-          </p>
+          <p className="shop-kicker">The watermark</p>
+          <Text className="mt-2 text-sm leading-relaxed text-ink-soft">
+            What you see here is only on the website. It will not be on your
+            print, and it will not be in a digital download.
+          </Text>
+        </div>
+        <div>
+          <p className="shop-kicker">Made to order</p>
+          <Text className="mt-2 text-sm leading-relaxed text-ink-soft">
+            Physical prints are made by{" "}
+            <a
+              href={PRODIGI_URL}
+              target="_blank"
+              rel="noreferrer"
+              className="text-bronze-deep underline underline-offset-4 hover:text-ink"
+            >
+              Prodigi</a>, a print lab we work with. They usually ship within
+            5–10 business days. Digital downloads are ready as soon as you
+            check out.
+          </Text>
+        </div>
+        <div>
+          <p className="shop-kicker">Orientation</p>
+          <Text className="mt-2 text-sm leading-relaxed text-ink-soft">
+            Sizes follow the photo — a landscape photo prints landscape, even
+            when the listed size is written as 8 × 10.
+          </Text>
         </div>
       </div>
+    </div>
+  )
+}
+
+const ShopShippingCopy = () => {
+  return (
+    <div className="flex flex-col gap-4">
+      <Heading level="h2" className="font-display text-xl tracking-tight text-ink">
+        Shipping & returns
+      </Heading>
+      <Text className="text-sm leading-relaxed text-ink-soft">
+        These are existing items, not made to order. They usually ship within
+        a few business days. Returns are accepted if the listing doesn’t match
+        what you received.
+      </Text>
     </div>
   )
 }
