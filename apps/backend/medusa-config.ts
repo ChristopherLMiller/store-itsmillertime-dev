@@ -8,6 +8,7 @@ import {
   resolveEnvironmentApiKey,
   resolveStripeWebhookSecret,
 } from './src/utils/ecommerce-environment';
+import { getAuthentikRedirectUris } from './src/modules/auth-authentik/redirect-uri';
 
 loadEnv(process.env.NODE_ENV || 'development', process.cwd());
 
@@ -82,6 +83,7 @@ const authentikClientSecret = process.env.AUTHENTIK_CLIENT_SECRET
 const authentikConfigured = Boolean(
   authentikIssuer && authentikClientId && authentikClientSecret
 )
+const { adminRedirectUri, storefrontRedirectUri } = getAuthentikRedirectUris()
 
 const authProviders: Record<string, unknown>[] = [
   {
@@ -98,9 +100,8 @@ if (authentikConfigured) {
       issuer: authentikIssuer,
       clientId: authentikClientId,
       clientSecret: authentikClientSecret,
-      redirectUri:
-        process.env.AUTHENTIK_REDIRECT_URI ||
-        `${process.env.MEDUSA_BACKEND_URL || 'http://localhost:9000'}/app/login`,
+      redirectUri: adminRedirectUri,
+      storefrontRedirectUri,
     },
   })
 }
@@ -163,7 +164,9 @@ module.exports = defineConfig({
         user: authentikConfigured
           ? ['emailpass', 'authentik']
           : ['emailpass'],
-        customer: ['emailpass'],
+        customer: authentikConfigured
+          ? ['emailpass', 'authentik']
+          : ['emailpass'],
       },
     },
   },

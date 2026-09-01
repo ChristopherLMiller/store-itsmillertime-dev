@@ -13,6 +13,7 @@ import {
   signAuthentikOAuthState,
   verifyAuthentikOAuthState,
 } from "./oauth-state"
+import { resolveAuthentikCallbackUrl } from "./redirect-uri"
 
 type InjectedDependencies = {
   logger: Logger
@@ -23,6 +24,7 @@ type Options = {
   clientId: string
   clientSecret: string
   redirectUri: string
+  storefrontRedirectUri?: string
 }
 
 type OidcEndpoints = {
@@ -80,10 +82,26 @@ class AuthentikAuthProviderService extends AbstractAuthModuleProvider {
   }
 
   async authenticate(
-    _data: AuthenticationInput,
+    data: AuthenticationInput,
     _authIdentityProviderService: AuthIdentityProviderService
   ): Promise<AuthenticationResponse> {
-    const callbackUrl = this.options_.redirectUri
+    let callbackUrl: string
+    try {
+      callbackUrl = resolveAuthentikCallbackUrl({
+        actorType: data.actor_type,
+        requestedCallbackUrl: firstQueryValue(data.body?.callback_url),
+        adminRedirectUri: this.options_.redirectUri,
+        storefrontRedirectUri: this.options_.storefrontRedirectUri,
+      })
+    } catch (error) {
+      return {
+        success: false,
+        error:
+          error instanceof Error
+            ? error.message
+            : "Authentik is not configured for storefront login",
+      }
+    }
     const codeVerifier = toBase64Url(randomBytes(32))
     const codeChallenge = toBase64Url(
       createHash("sha256").update(codeVerifier).digest()

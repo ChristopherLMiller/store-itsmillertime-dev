@@ -2,6 +2,7 @@
 
 import { sdk } from "@lib/config"
 import { fetchCache } from "@lib/util/cache"
+import { decodeJwtPayload, extractAuthToken } from "@lib/util/jwt"
 import medusaError from "@lib/util/medusa-error"
 import { HttpTypes } from "@medusajs/types"
 import { FetchError } from "@medusajs/js-sdk"
@@ -24,7 +25,41 @@ export type CustomerAuthState =
   | { state: "error"; error: string }
   | { state: "verification_required"; email: string }
   | { state: "success" }
+  | { state: "reset_sent"; email: string }
+  | { state: "reset_success" }
   | null
+
+function authErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error)
+}
+
+function isExistingCustomerError(error: unknown): boolean {
+  return /already exists/i.test(authErrorMessage(error))
+}
+
+function nameFromMetadata(metadata: Record<string, unknown> | undefined): {
+  first_name?: string
+  last_name?: string
+} {
+  const firstName =
+    typeof metadata?.given_name === "string" ? metadata.given_name : undefined
+  const lastName =
+    typeof metadata?.family_name === "string" ? metadata.family_name : undefined
+
+  if (firstName || lastName) {
+    return { first_name: firstName, last_name: lastName }
+  }
+
+  if (typeof metadata?.name === "string" && metadata.name.trim()) {
+    const [first_name, ...rest] = metadata.name.trim().split(/\s+/)
+    return {
+      first_name,
+      last_name: rest.length ? rest.join(" ") : undefined,
+    }
+  }
+
+  return {}
+}
 
 // Requests a verification email for the given customer. The request must be
 // authenticated with a token tied to the auth identity (the token returned by
@@ -246,6 +281,204 @@ export async function confirmEmailVerification(
   } catch (error) {
     return { success: false, error: String(error) }
   }
+}
+
+export async function getAuthentikCustomerLoginEnabled(): Promise<boolean> {
+  try {
+    const result = await sdk.client.fetch<{
+      enabled?: boolean
+      storefront?: boolean
+    }>("/store/authentik/status")
+    return Boolean(result.storefront ?? result.enabled)
+  } catch {
+    return false
+  }
+}
+
+export async function startAuthentikLogin(
+  _currentState: unknown,
+  _formData: FormData
+): Promise<{ error: string } | null> {
+  let location: string | undefined
+
+  try {
+    const result = await sdk.auth.login("customer", "authentik", {})
+    if (typeof result === "object" && result && "location" in result) {
+      location = result.location
+    }
+  } catch (error) {
+    return { error: authErrorMessage(error) }
+  }
+
+  if (location) {
+    redirect(location)
+  }
+
+  return { error: "Authentik sign-in isn't available right now." }
+}
+
+export async function completeAuthentikCustomerLogin(
+  query: Record<string, string>
+): Promise<CustomerAuthState> {
+  if (query.error) {
+    return {
+      state: "error",
+      error: query.error_description || query.error,
+    }
+  }
+
+  let result: Awaited<ReturnType<typeof sdk.auth.callback>>
+  try {
+    result = await sdk.auth.callback("customer", "authentik", query)
+  } catch (error) {
+    return { state: "error", error: authErrorMessage(error) }
+  }
+
+  if (typeof result === "object" && "verification_required" in result) {
+    const decoded = decodeJwtPayload(result.token)
+    const email =
+      typeof decoded.user_metadata?.email === "string"
+        ? decoded.user_metadata.email
+        : ""
+    if (email) {
+      try {
+        await requestVerificationEmail(email, result.token)
+      } catch {
+        // The customer can resend from the verification page.
+      }
+      return { state: "verification_required", email }
+    }
+    return {
+      state: "error",
+      error: "Email verification is required, but Authentik did not provide an email.",
+    }
+  }
+
+  const token = extractAuthToken(result)
+  if (!token) {
+    return { state: "error", error: "Authentik callback did not return a token." }
+  }
+
+  const decoded = decodeJwtPayload(token)
+  if (!decoded.actor_id) {
+    const email =
+      typeof decoded.user_metadata?.email === "string"
+        ? decoded.user_metadata.email
+        : ""
+    if (!email) {
+      return {
+        state: "error",
+        error: "Authentik did not provide an email address.",
+      }
+    }
+
+    try {
+      await sdk.store.customer.create(
+        {
+          email,
+          ...nameFromMetadata(decoded.user_metadata),
+        },
+        {},
+        { authorization: `Bearer ${token}` }
+      )
+    } catch (error) {
+      if (isExistingCustomerError(error)) {
+        return {
+          state: "error",
+          error:
+            "A shop account already exists for this email. Sign in with your password, then connect your gallery account from Profile.",
+        }
+      }
+      return { state: "error", error: authErrorMessage(error) }
+    }
+
+    let refreshed: Awaited<ReturnType<typeof sdk.auth.refresh>>
+    try {
+      refreshed = await sdk.auth.refresh({
+        authorization: `Bearer ${token}`,
+      })
+    } catch (error) {
+      return { state: "error", error: authErrorMessage(error) }
+    }
+
+    const nextToken = extractAuthToken(refreshed)
+    if (!nextToken) {
+      return { state: "error", error: "Could not finish Authentik sign-in." }
+    }
+
+    await setAuthToken(nextToken)
+  } else {
+    await setAuthToken(token)
+  }
+
+  const customerCacheTag = await getCacheTag("customers")
+  revalidateTag(customerCacheTag)
+
+  try {
+    await transferCart()
+  } catch {
+    // The customer is signed in; cart transfer can be retried later.
+  }
+
+  return { state: "success" }
+}
+
+export async function requestPasswordReset(
+  _currentState: unknown,
+  formData: FormData
+): Promise<CustomerAuthState> {
+  const email = String(formData.get("email") || "").trim()
+  if (!email) {
+    return { state: "error", error: "Enter the email for your shop account." }
+  }
+
+  try {
+    await sdk.auth.resetPassword("customer", "emailpass", {
+      identifier: email,
+    })
+  } catch {
+    // Don't reveal whether the email has an account.
+  }
+
+  return { state: "reset_sent", email }
+}
+
+export async function resetPassword(
+  _currentState: unknown,
+  formData: FormData
+): Promise<CustomerAuthState> {
+  const email = String(formData.get("email") || "").trim()
+  const token = String(formData.get("token") || "").trim()
+  const password = String(formData.get("password") || "")
+  const confirmPassword = String(formData.get("confirm_password") || "")
+
+  if (!token) {
+    return {
+      state: "error",
+      error: "This reset link is invalid or has expired.",
+    }
+  }
+
+  if (!password) {
+    return { state: "error", error: "Enter a new password." }
+  }
+
+  if (password !== confirmPassword) {
+    return { state: "error", error: "Passwords do not match." }
+  }
+
+  try {
+    await sdk.auth.updateProvider(
+      "customer",
+      "emailpass",
+      { email, password },
+      token
+    )
+  } catch (error) {
+    return { state: "error", error: authErrorMessage(error) }
+  }
+
+  return { state: "reset_success" }
 }
 
 export async function signout(countryCode: string) {
