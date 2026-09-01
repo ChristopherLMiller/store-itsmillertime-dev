@@ -5,9 +5,11 @@ import ProfilePhone from "@modules/account//components/profile-phone"
 import ProfileBillingAddress from "@modules/account/components/profile-billing-address"
 import ProfileEmail from "@modules/account/components/profile-email"
 import ProfileName from "@modules/account/components/profile-name"
+import ProfileItsMillerTimeLink from "@modules/account/components/profile-itsmillertime-link"
 import { notFound } from "next/navigation"
 import { listRegions } from "@lib/data/regions"
 import { retrieveCustomer } from "@lib/data/customer"
+import { getAccountLinkStatus } from "@lib/data/account-link"
 
 export const metadata: Metadata = {
   title: "Profile",
@@ -17,6 +19,7 @@ export const metadata: Metadata = {
 export default async function Profile() {
   const customer = await retrieveCustomer()
   const regions = await listRegions()
+  const accountLink = await getAccountLinkStatus()
 
   if (!customer || !regions) {
     notFound()
@@ -38,6 +41,8 @@ export default async function Profile() {
         <ProfileEmail customer={customer} />
         <Divider />
         <ProfilePhone customer={customer} />
+        <Divider />
+        <ProfileItsMillerTimeLink initialStatus={accountLink} />
         <Divider />
         {/* <ProfilePassword customer={customer} />
         <Divider /> */}
