@@ -1,8 +1,8 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { MedusaError, Modules } from "@medusajs/framework/utils"
-import { META_PAYLOAD_USER_ID } from "../../../lib/account-link/constants"
-import { assertInternalSecret } from "../../../lib/account-link/otp"
-import { unlinkAccounts } from "../../../lib/account-link/workflow"
+import { META_PAYLOAD_USER_ID } from "../../../../lib/account-link/constants"
+import { assertInternalSecret } from "../../../../lib/account-link/otp"
+import { unlinkAccounts } from "../../../../lib/account-link/workflow"
 
 type UnlinkBody = {
   payload_user_id?: string

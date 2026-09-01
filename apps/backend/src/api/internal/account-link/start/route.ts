@@ -1,7 +1,7 @@
 import type { MedusaRequest, MedusaResponse } from "@medusajs/framework/http"
 import { MedusaError } from "@medusajs/framework/utils"
-import { assertInternalSecret } from "../../../lib/account-link/otp"
-import { startPayloadToShopChallenge } from "../../../lib/account-link/workflow"
+import { assertInternalSecret } from "../../../../lib/account-link/otp"
+import { startPayloadToShopChallenge } from "../../../../lib/account-link/workflow"
 
 type StartBody = {
   payload_user_id?: string
