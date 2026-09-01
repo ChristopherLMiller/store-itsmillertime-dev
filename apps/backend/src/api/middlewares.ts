@@ -1,12 +1,21 @@
-import { defineMiddlewares } from "@medusajs/framework/http"
+import {
+  authenticate,
+  defineMiddlewares,
+  type MiddlewareRoute,
+} from "@medusajs/framework/http"
 import { authentikAuthMiddlewares } from "./auth/authentik/middlewares"
 import { printOfferingsMiddlewares } from "./admin/print-offerings/middlewares"
 import { offeringSetsMiddlewares } from "./admin/offering-sets/middlewares"
 import { productOfferingSetMiddlewares } from "./admin/products/[id]/offering-set/middlewares"
 
-// Multipart uploads bypass JSON body parsers; this raises limits for any
-// non-multipart upload routes and documents intent alongside admin.maxUploadFileSize.
 const UPLOAD_SIZE_LIMIT = "100mb"
+
+const accountLinkMiddlewares: MiddlewareRoute[] = [
+  {
+    matcher: "/store/account-link*",
+    middlewares: [authenticate("customer", ["bearer", "session"])],
+  },
+]
 
 export default defineMiddlewares({
   routes: [
@@ -28,5 +37,6 @@ export default defineMiddlewares({
     ...printOfferingsMiddlewares,
     ...offeringSetsMiddlewares,
     ...productOfferingSetMiddlewares,
+    ...accountLinkMiddlewares,
   ],
 })

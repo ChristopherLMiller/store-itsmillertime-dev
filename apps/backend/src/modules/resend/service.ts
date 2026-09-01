@@ -17,6 +17,7 @@ import { merchantNewOrderEmail } from "./emails/merchant-new-order";
 import { userInvitedEmail } from "./emails/user-invited";
 import { passwordResetEmail } from "./emails/password-reset";
 import { digitalDownloadEmail } from "./emails/digital-download";
+import { accountLinkOtpEmail } from "./emails/account-link-otp";
 
 enum Templates {
   ORDER_PLACED = "order-placed",
@@ -25,6 +26,7 @@ enum Templates {
   USER_INVITED = "user-invited",
   PASSWORD_RESET = "password-reset",
   DIGITAL_DOWNLOAD = "digital-download",
+  ACCOUNT_LINK_OTP = "account-link-otp",
 }
 
 const templates: {[key in Templates]?: (props: unknown) => React.ReactNode} = {
@@ -34,6 +36,7 @@ const templates: {[key in Templates]?: (props: unknown) => React.ReactNode} = {
   [Templates.USER_INVITED]: userInvitedEmail,
   [Templates.PASSWORD_RESET]: passwordResetEmail,
   [Templates.DIGITAL_DOWNLOAD]: digitalDownloadEmail,
+  [Templates.ACCOUNT_LINK_OTP]: accountLinkOtpEmail,
 }
 
 type ResendOptions = {
@@ -121,6 +124,10 @@ class ResendNotificationProviderService extends AbstractNotificationProviderServ
         return data?.order_display_id
           ? `Your digital download for order #${data.order_display_id}`
           : "Your digital download is ready"
+      case Templates.ACCOUNT_LINK_OTP:
+        return typeof data?.subject === "string" && data.subject.trim()
+          ? data.subject
+          : "Your itsMillerTime account link code"
       default:
         return "New Email"
     }

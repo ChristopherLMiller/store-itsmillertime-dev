@@ -23,6 +23,7 @@ const modules: Record<string, unknown>[] = [
   { resolve: './src/modules/print-catalog' },
   { resolve: './src/modules/prodigi' },
   { resolve: './src/modules/digital-delivery' },
+  { resolve: './src/modules/account-link' },
   {
     resolve: '@medusajs/medusa/fulfillment',
     options: {
