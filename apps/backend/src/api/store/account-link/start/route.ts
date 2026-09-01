@@ -3,7 +3,7 @@ import type {
   MedusaResponse,
 } from "@medusajs/framework/http"
 import { MedusaError } from "@medusajs/framework/utils"
-import { startShopToPayloadChallenge } from "../../../lib/account-link/workflow"
+import { startShopToPayloadChallenge } from "../../../../lib/account-link/workflow"
 
 type StartBody = {
   email?: string
