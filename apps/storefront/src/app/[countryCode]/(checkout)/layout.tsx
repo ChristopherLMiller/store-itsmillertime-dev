@@ -11,7 +11,11 @@ export default function CheckoutLayout({
   return (
     <div className="w-full bg-paper relative small:min-h-screen">
       <SandboxModeBanner />
-      <div className="h-16 bg-night text-cream">
+      <div className="relative h-16 bg-night text-cream">
+        <div
+          aria-hidden
+          className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-bronze to-transparent"
+        />
         <nav className="flex h-full items-center content-container justify-between">
           <LocalizedClientLink
             href="/cart"

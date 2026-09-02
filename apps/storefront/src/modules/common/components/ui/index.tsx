@@ -58,7 +58,7 @@ Heading.displayName = "Heading"
 
 // Button Component
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "secondary" | "transparent"
+  variant?: "primary" | "secondary" | "transparent" | "night"
   size?: "small" | "medium" | "large"
   isLoading?: boolean
 }
@@ -86,6 +86,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             "bg-brick text-cream shadow-lift hover:bg-brick-deep hover:shadow-lift-md hover:-translate-y-0.5",
           variant === "secondary" &&
             "bg-surface text-ink border border-bronze/30 shadow-lift hover:border-bronze hover:bg-paper",
+          variant === "night" &&
+            "bg-night text-cream shadow-lift hover:bg-dusk hover:shadow-lift-md hover:-translate-y-0.5",
           variant === "transparent" &&
             "bg-transparent text-ink hover:bg-black/5",
           size === "small" && "h-8 px-3 text-sm",
@@ -222,7 +224,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
         <input
           ref={ref}
           className={clsx(
-            "flex h-10 w-full rounded-md border border-gray-200 bg-white px-3 py-2 text-sm placeholder:text-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50",
+            "shop-field flex h-10 w-full px-3 py-2 text-sm placeholder:text-ink-muted focus:outline-none disabled:cursor-not-allowed disabled:opacity-50",
             className
           )}
           {...props}

@@ -1,13 +1,34 @@
 export const SITE_NAME =
   process.env.NEXT_PUBLIC_SITE_NAME || "ItsMillerTime Store"
 
-export const MAIN_SITE_URL =
-  process.env.NEXT_PUBLIC_MAIN_SITE_URL || "https://itsmillertime.dev"
+export const SITE_DESCRIPTION =
+  "The ItsMillerTime shop — prints, models, games, and 3D printed work."
+
+export const SITE_TWITTER = "@itsmiller_time"
+
+/**
+ * Apex `itsmillertime.dev` does not resolve; the public site is on www.
+ */
+export function ensureWwwMainSiteUrl(url: string): string {
+  try {
+    const parsed = new URL(url)
+    if (parsed.hostname === "itsmillertime.dev") {
+      parsed.hostname = "www.itsmillertime.dev"
+    }
+    return parsed.toString().replace(/\/$/, "")
+  } catch {
+    return url
+  }
+}
+
+export const MAIN_SITE_URL = ensureWwwMainSiteUrl(
+  process.env.NEXT_PUBLIC_MAIN_SITE_URL || "https://www.itsmillertime.dev"
+)
 
 export const MAIN_SITE_GALLERY_PATH = "/galleries"
 
 export function mainSiteUrl(path = "/"): string {
-  return new URL(path, MAIN_SITE_URL).toString()
+  return new URL(path, `${MAIN_SITE_URL}/`).toString()
 }
 
 export function galleryHomeUrl(): string {
@@ -20,7 +41,7 @@ export function galleryAlbumUrl(
 ): string {
   const url = new URL(
     `${MAIN_SITE_GALLERY_PATH}/${albumSlug}`,
-    MAIN_SITE_URL
+    `${MAIN_SITE_URL}/`
   )
   if (imageId != null && String(imageId).length > 0) {
     url.searchParams.set("selected", String(imageId))

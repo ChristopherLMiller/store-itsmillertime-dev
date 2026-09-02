@@ -90,12 +90,15 @@ const Login = ({ setCurrentView, authentikEnabled = false }: Props) => {
               data-testid="authentik-login-error"
             />
             <SubmitButton
-              variant="secondary"
+              variant="night"
               data-testid="authentik-sign-in-button"
               className="w-full h-11"
             >
               Sign in with Authentik
             </SubmitButton>
+            <p className="mt-3 text-center text-xs leading-relaxed text-ink-muted">
+              Use Authentik if you have a frontend or CMS account.
+            </p>
           </form>
         </>
       )}
