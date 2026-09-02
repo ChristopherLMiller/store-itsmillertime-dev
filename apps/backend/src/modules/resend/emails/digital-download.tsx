@@ -1,16 +1,5 @@
-import {
-  Body,
-  Button,
-  Container,
-  Head,
-  Heading,
-  Html,
-  Link,
-  Preview,
-  Section,
-  Tailwind,
-  Text,
-} from "@react-email/components"
+import { Text } from "@react-email/components"
+import { ActionEmailTemplate, emailStyles } from "./layout"
 
 type DigitalDownloadEmailProps = {
   order_display_id: number | string
@@ -23,7 +12,7 @@ function DigitalDownloadEmailComponent({
   order_display_id,
   download_url,
   expires_at,
-  store_name = "Store",
+  store_name = "ItsMillerTime Store",
 }: DigitalDownloadEmailProps) {
   const expiresLabel = new Date(expires_at).toLocaleString("en-US", {
     dateStyle: "medium",
@@ -31,63 +20,37 @@ function DigitalDownloadEmailComponent({
   })
 
   return (
-    <Html>
-      <Head />
-      <Preview>{`Your digital download for order #${order_display_id}`}</Preview>
-      <Tailwind>
-        <Body className="bg-white my-auto mx-auto font-sans px-2">
-          <Container className="border border-solid border-[#eaeaea] rounded my-[40px] mx-auto p-[20px] max-w-[465px]">
-            <Section className="mt-[32px]">
-              <Heading className="text-black text-[24px] font-normal text-center p-0 my-[30px] mx-0">
-                Your download is ready
-              </Heading>
-            </Section>
-
-            <Section className="my-[32px]">
-              <Text className="text-black text-[14px] leading-[24px]">
-                Thanks for your purchase from {store_name}.
-              </Text>
-              <Text className="text-black text-[14px] leading-[24px]">
-                Your digital files for order #{order_display_id} are ready to
-                download as a zip archive.
-              </Text>
-            </Section>
-
-            <Section className="text-center mt-[32px] mb-[32px]">
-              <Button
-                className="bg-[#000000] rounded text-white text-[12px] font-semibold no-underline text-center px-5 py-3"
-                href={download_url}
-              >
-                Download files
-              </Button>
-            </Section>
-
-            <Section className="my-[32px]">
-              <Text className="text-black text-[14px] leading-[24px]">
-                Or copy and paste this URL into your browser:
-              </Text>
-              <Link
-                href={download_url}
-                className="text-blue-600 no-underline text-[14px] leading-[24px] break-all"
-              >
-                {download_url}
-              </Link>
-            </Section>
-
-            <Section className="my-[32px]">
-              <Text className="text-[#666666] text-[12px] leading-[24px]">
-                This link expires on {expiresLabel}.
-              </Text>
-            </Section>
-          </Container>
-        </Body>
-      </Tailwind>
-    </Html>
+    <ActionEmailTemplate
+      preview={`Your digital download for order #${order_display_id}`}
+      greeting="Your download is ready"
+      body={
+        <>
+          <Text style={emailStyles.paragraph}>
+            Thanks for your purchase from {store_name}. Your digital files for
+            order #{order_display_id} are ready to download as a zip archive.
+          </Text>
+          <Text style={emailStyles.paragraph}>
+            This link expires on {expiresLabel}.
+          </Text>
+        </>
+      }
+      buttonText="Download files"
+      buttonHref={download_url}
+      fallbackText="If the button doesn't work, copy and paste this link into your browser:"
+      footerText="If you didn't place this order, reply to this email and we'll help sort it out."
+    />
   )
 }
 
 export const digitalDownloadEmail = (props: DigitalDownloadEmailProps) => (
   <DigitalDownloadEmailComponent {...props} />
 )
+
+DigitalDownloadEmailComponent.PreviewProps = {
+  order_display_id: 42,
+  download_url: "https://store.itsmillertime.dev/downloads/example.zip",
+  expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString(),
+  store_name: "ItsMillerTime Store",
+} satisfies DigitalDownloadEmailProps
 
 export default DigitalDownloadEmailComponent

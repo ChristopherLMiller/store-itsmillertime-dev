@@ -47,9 +47,9 @@
   select:-webkit-autofill,
   select:-webkit-autofill:hover,
   select:-webkit-autofill:focus {
-    border: 1px solid #c4a06a;
+    border: 1px solid #9a7848;
     -webkit-text-fill-color: #161311;
-    -webkit-box-shadow: 0 0 0px 1000px #fffaf4 inset;
+    -webkit-box-shadow: 0 0 0px 1000px #eadfce inset;
     transition: background-color 5000s ease-in-out 0s;
   }
 
@@ -89,6 +89,27 @@
 
   .shop-panel {
     @apply bg-surface border border-bronze/25 shadow-lift;
+  }
+
+  .shop-field {
+    @apply bg-paper-dark text-ink rounded-sm;
+    border: 1px solid #c4a06a;
+    box-shadow: inset 0 1px 2px rgba(22, 19, 17, 0.1);
+  }
+
+  .shop-field:hover {
+    @apply bg-[#e4d2ae];
+    border-color: #9a7848;
+  }
+
+  .shop-field:focus,
+  .shop-field:focus-visible,
+  .shop-field:focus-within {
+    @apply bg-paper outline-none;
+    border-color: #9a7848;
+    box-shadow:
+      inset 0 1px 2px rgba(22, 19, 17, 0.08),
+      0 0 0 1px #9a7848;
   }
 
   .shop-kicker {

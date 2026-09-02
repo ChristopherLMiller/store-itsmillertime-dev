@@ -21,12 +21,17 @@ const Review = ({ cart }: { cart: HttpTypes.StoreCart }) => {
     (cart.payment_collection || paidByGiftcard)
 
   return (
-    <div className="bg-surface">
-      <div className="flex flex-row items-center justify-between mb-6">
+    <div className="shop-panel p-6 small:p-8">
+      <div
+        className={clx(
+          "flex flex-row items-center justify-between",
+          isOpen && previousStepsCompleted && "mb-6"
+        )}
+      >
         <Heading
           level="h2"
           className={clx(
-            "flex flex-row text-3xl-regular gap-x-2 items-baseline",
+            "flex flex-row font-display text-3xl tracking-tight gap-x-2 items-baseline",
             {
               "opacity-50 pointer-events-none select-none": !isOpen,
             }

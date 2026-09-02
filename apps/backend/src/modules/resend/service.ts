@@ -107,7 +107,7 @@ class ResendNotificationProviderService extends AbstractNotificationProviderServ
     }
     switch(template) {
       case Templates.ORDER_PLACED:
-        return "Order Confirmation"
+        return "Your ItsMillerTime order"
       case Templates.ORDER_SHIPPED:
         return data?.order_display_id
           ? `Your order #${data.order_display_id} has shipped`
@@ -117,9 +117,9 @@ class ResendNotificationProviderService extends AbstractNotificationProviderServ
           ? data.subject
           : "New order received"
       case Templates.USER_INVITED:
-        return "You're Invited!"
+        return "You're invited to ItsMillerTime"
       case Templates.PASSWORD_RESET:
-        return "Reset Your Password"
+        return "Reset your ItsMillerTime password"
       case Templates.DIGITAL_DOWNLOAD:
         return data?.order_display_id
           ? `Your digital download for order #${data.order_display_id}`

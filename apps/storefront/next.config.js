@@ -52,6 +52,10 @@ const nextConfig = {
       },
       {
         protocol: "https",
+        hostname: "www.itsmillertime.dev",
+      },
+      {
+        protocol: "https",
         hostname: "*.itsmillertime.dev",
       },
       ...(S3_HOSTNAME && S3_PATHNAME
