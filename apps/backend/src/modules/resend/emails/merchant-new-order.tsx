@@ -1,4 +1,4 @@
-import { Button, Hr, Text } from "@react-email/components"
+import { Button, Hr, Text } from "react-email"
 import type { CustomerDTO, OrderDTO } from "@medusajs/framework/types"
 import { formatEmailPrice } from "../../../utils/format-email-price"
 import {

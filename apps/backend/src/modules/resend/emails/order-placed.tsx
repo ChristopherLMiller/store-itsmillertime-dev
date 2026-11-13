@@ -1,4 +1,4 @@
-import { Button, Hr, Text } from "@react-email/components"
+import { Button, Hr, Text } from "react-email"
 import type { BigNumberValue, CustomerDTO, OrderDTO } from "@medusajs/framework/types"
 import {
   EmailLayout,

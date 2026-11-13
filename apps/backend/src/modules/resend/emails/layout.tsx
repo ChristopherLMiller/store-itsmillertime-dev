@@ -12,7 +12,7 @@ import {
   Row,
   Section,
   Text,
-} from "@react-email/components"
+} from "react-email"
 import * as React from "react"
 
 const LOGO_URL =

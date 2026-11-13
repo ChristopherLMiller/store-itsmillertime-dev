@@ -1,4 +1,4 @@
-import { Button, Hr, Text } from "@react-email/components"
+import { Button, Hr, Text } from "react-email"
 import { formatEmailPrice } from "../../../utils/format-email-price"
 import type { ShipmentItemLine } from "../../../utils/shipment-notification"
 import {
