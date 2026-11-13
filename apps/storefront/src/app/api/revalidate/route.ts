@@ -23,7 +23,7 @@ function revalidateCatalog(tagsParam: string | null) {
   const tags = requested?.length ? requested : [...CATALOG_TAGS]
 
   for (const tag of tags) {
-    revalidateTag(tag)
+    revalidateTag(tag, { expire: 0 })
   }
 
   // Bust the full route cache, not just fetch tags. Product pages are

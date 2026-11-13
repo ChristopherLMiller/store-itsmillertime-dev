@@ -107,7 +107,7 @@ export async function confirmItsMillerTimeLink(
 
     const tag = await getCacheTag("customers")
     if (tag) {
-      revalidateTag(tag)
+      revalidateTag(tag, { expire: 0 })
     }
 
     return { success: true, error: null }
@@ -139,7 +139,7 @@ export async function unlinkItsMillerTimeAccount(): Promise<{
 
     const tag = await getCacheTag("customers")
     if (tag) {
-      revalidateTag(tag)
+      revalidateTag(tag, { expire: 0 })
     }
 
     return { success: true, error: null }
