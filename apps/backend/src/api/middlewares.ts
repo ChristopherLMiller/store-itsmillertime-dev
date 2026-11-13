@@ -1,4 +1,5 @@
 import {
+  allowFields,
   authenticate,
   defineMiddlewares,
   type MiddlewareRoute,
@@ -14,6 +15,29 @@ const accountLinkMiddlewares: MiddlewareRoute[] = [
   {
     matcher: "/store/account-link*",
     middlewares: [authenticate("customer", ["bearer", "session"])],
+  },
+]
+
+// Since Medusa 2.21, Store API routes silently drop any requested field that is
+// not on the route's allowlist. These are the extra fields the storefront
+// relies on (see apps/storefront/src/lib/data/*). Keep the list minimal:
+// every entry here is publicly readable. No `method`, so the allowlist also
+// applies to POST routes that return the same resource.
+const storeAllowedFieldsMiddlewares: MiddlewareRoute[] = [
+  {
+    // Product listing reads category.parent_category to classify prints/games.
+    matcher: "/store/products*",
+    middlewares: [allowFields("categories.parent_category")],
+  },
+  {
+    // Category tree/nav reads metadata on child categories.
+    matcher: "/store/product-categories*",
+    middlewares: [allowFields("category_children.metadata")],
+  },
+  {
+    // Shipping logic reads per-variant metadata from cart items.
+    matcher: "/store/carts*",
+    middlewares: [allowFields("items.variant.metadata")],
   },
 ]
 
@@ -38,5 +62,6 @@ export default defineMiddlewares({
     ...offeringSetsMiddlewares,
     ...productOfferingSetMiddlewares,
     ...accountLinkMiddlewares,
+    ...storeAllowedFieldsMiddlewares,
   ],
 })

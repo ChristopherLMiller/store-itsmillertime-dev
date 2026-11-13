@@ -21,9 +21,6 @@ const nextConfig = {
       fullUrl: true,
     },
   },
-  eslint: {
-    ignoreDuringBuilds: true,
-  },
   typescript: {
     ignoreBuildErrors: true,
   },
@@ -49,6 +46,10 @@ const nextConfig = {
       {
         protocol: "https",
         hostname: "itsmillertime.dev",
+      },
+      {
+        protocol: "https",
+        hostname: "www.itsmillertime.dev",
       },
       {
         protocol: "https",

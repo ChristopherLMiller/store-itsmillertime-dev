@@ -7,7 +7,6 @@ import { convertToLocale } from "@lib/util/money"
 import { CheckCircleSolid, Loader } from "@medusajs/icons"
 import { HttpTypes } from "@medusajs/types"
 import ErrorMessage from "@modules/checkout/components/error-message"
-import Divider from "@modules/common/components/divider"
 import MedusaRadio from "@modules/common/components/radio"
 import { Button, clx, Heading, Text } from "@modules/common/components/ui"
 import { usePathname, useRouter, useSearchParams } from "next/navigation"
@@ -158,12 +157,17 @@ const Shipping: React.FC<ShippingProps> = ({
   }, [isOpen])
 
   return (
-    <div className="bg-surface">
-      <div className="flex flex-row items-center justify-between mb-6">
+    <div className="shop-panel p-6 small:p-8">
+      <div
+        className={clx(
+          "flex flex-row items-center justify-between",
+          (isOpen || (cart.shipping_methods?.length ?? 0) > 0) && "mb-6"
+        )}
+      >
         <Heading
           level="h2"
           className={clx(
-            "flex flex-row text-3xl-regular gap-x-2 items-baseline",
+            "flex flex-row font-display text-3xl tracking-tight gap-x-2 items-baseline",
             {
               "opacity-50 pointer-events-none select-none":
                 !isOpen && cart.shipping_methods?.length === 0,
@@ -182,7 +186,7 @@ const Shipping: React.FC<ShippingProps> = ({
             <Text>
               <button
                 onClick={handleEdit}
-                className="text-ui-fg-interactive hover:text-ui-fg-interactive-hover"
+                className="shop-link text-bronze hover:text-bronze-deep"
                 data-testid="edit-delivery-button"
               >
                 Edit
@@ -409,7 +413,6 @@ const Shipping: React.FC<ShippingProps> = ({
           </div>
         </div>
       )}
-      <Divider className="mt-8" />
     </div>
   )
 }

@@ -128,7 +128,7 @@ async function getCountryCode(
 /**
  * Middleware to handle region selection and onboarding status.
  */
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
   if (request.nextUrl.pathname.includes(".")) {
     return NextResponse.next()
   }

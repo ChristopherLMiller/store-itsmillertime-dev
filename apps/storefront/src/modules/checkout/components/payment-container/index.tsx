@@ -108,7 +108,7 @@ export const StripeCardContainer = ({
     >
       {selectedPaymentOptionId === paymentProviderId &&
         (!stripePublishableKey ? (
-          <Text size="small" className="my-4 text-ui-fg-error">
+          <Text className="my-4 text-small-regular text-ui-fg-error">
             Stripe publishable key is missing. Set {getStripePublishableKeyEnvVar()}{" "}
             in your storefront environment and rebuild the app.
           </Text>

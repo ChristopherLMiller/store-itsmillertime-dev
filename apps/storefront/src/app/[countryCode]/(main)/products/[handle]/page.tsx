@@ -107,11 +107,15 @@ export async function generateMetadata(props: Props): Promise<Metadata> {
   }
 
   return {
-    title: `${product.title} | ${SITE_NAME}`,
-    description: `${product.title}`,
+    title: product.title,
+    description:
+      product.description?.replace(/<[^>]*>/g, "").slice(0, 160) ||
+      `${product.title} at ${SITE_NAME}.`,
     openGraph: {
-      title: `${product.title} | ${SITE_NAME}`,
-      description: `${product.title}`,
+      title: product.title,
+      description:
+        product.description?.replace(/<[^>]*>/g, "").slice(0, 160) ||
+        `${product.title} at ${SITE_NAME}.`,
       images: product.thumbnail ? [product.thumbnail] : [],
     },
   }

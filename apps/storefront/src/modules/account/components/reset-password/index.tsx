@@ -18,7 +18,7 @@ const ResetPassword = ({ token, email }: Props) => {
 
   return (
     <div
-      className="w-full max-w-md shop-panel p-8 small:p-10 shop-fade-up"
+      className="w-full max-w-md h-fit shop-panel p-8 small:p-10 shop-fade-up"
       data-testid="reset-password-page"
     >
       <p className="shop-kicker">Account</p>

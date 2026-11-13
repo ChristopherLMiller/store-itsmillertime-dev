@@ -16,7 +16,7 @@ export default async function ResetPasswordPage({ searchParams }: Props) {
   const { token = null, email = null } = await searchParams
 
   return (
-    <div className="w-full flex justify-center px-6 py-16 small:py-24 min-h-[calc(100dvh-12rem)]">
+    <div className="w-full flex items-start justify-center px-6 py-16 small:py-24">
       <Suspense
         fallback={
           <p className="text-sm text-ink-muted">Loading reset form…</p>
