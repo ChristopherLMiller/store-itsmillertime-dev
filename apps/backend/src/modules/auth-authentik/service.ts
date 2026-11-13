@@ -15,6 +15,13 @@ import {
 } from "./oauth-state"
 import { resolveAuthentikCallbackUrl } from "./redirect-uri"
 
+// Medusa still passes the route's `actor_type` to providers at runtime (see
+// @medusajs/medusa api/auth/[actor_type]/[auth_provider]/route), but the
+// field was dropped from the public `AuthenticationInput` type in 2.2x.
+type AuthenticationInputWithActor = AuthenticationInput & {
+  actor_type?: string
+}
+
 type InjectedDependencies = {
   logger: Logger
 }
@@ -82,7 +89,7 @@ class AuthentikAuthProviderService extends AbstractAuthModuleProvider {
   }
 
   async authenticate(
-    data: AuthenticationInput,
+    data: AuthenticationInputWithActor,
     _authIdentityProviderService: AuthIdentityProviderService
   ): Promise<AuthenticationResponse> {
     let callbackUrl: string

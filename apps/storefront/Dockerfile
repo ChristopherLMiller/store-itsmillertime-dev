@@ -16,7 +16,7 @@
 #
 # NEXT_PUBLIC_* variables must be set at build time (Next.js bakes them into the bundle).
 
-ARG NODE_VERSION=22
+ARG NODE_VERSION=22.22
 FROM node:${NODE_VERSION}-bookworm-slim AS base
 
 RUN apt-get update \
